@@ -1,0 +1,57 @@
+---
+// Article d'actualite.
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getActualitesPubliees, estPresent, formatDate } from '../../lib/contenu';
+
+export async function getStaticPaths() {
+  const actualites = await getCollection('actualites', (e) => e.data.publie === true);
+  return actualites.map((a) => ({ params: { id: a.id }, props: { a } }));
+}
+
+const { a } = Astro.props;
+const { Content } = await render(a);
+const liste = await getActualitesPubliees();
+const index = liste.findIndex((x) => x.id === a.id);
+const precedent = index > 0 ? liste[index - 1] : null;
+const suivant = index >= 0 && index < liste.length - 1 ? liste[index + 1] : null;
+
+const titre = `${a.data.titre} | Actualités du CMPJ Régional du Littoral`;
+const description = estPresent(a.data.resume) ? a.data.resume : a.data.titre;
+---
+
+<BaseLayout title={titre} description={description} ogType="article">
+  <article class="mx-auto max-w-3xl px-4 py-10">
+    <nav aria-label="Fil d'Ariane" class="mb-4 text-sm text-gris">
+      <a class="no-underline hover:underline" href="/">Accueil</a> / <a class="no-underline hover:underline" href="/actualites/">Actualités</a>
+    </nav>
+
+    <header>
+      <div class="flex items-center gap-3 text-sm">
+        <time class="text-gris">{formatDate(a.data.date)}</time>
+        {estPresent(a.data.categorie) && <span class="font-semibold uppercase tracking-wide text-vert">{a.data.categorie}</span>}
+      </div>
+      <h1 class="mt-2 text-vert-nuit">{a.data.titre}</h1>
+    </header>
+
+    {
+      estPresent(a.data.image) && (
+        <figure class="my-6">
+          <img src={a.data.image} alt={a.data.image_legende || a.data.titre} loading="lazy" class="w-full rounded" />
+          {estPresent(a.data.image_legende) && <figcaption class="mt-1 text-sm text-gris">{a.data.image_legende}</figcaption>}
+        </figure>
+      )
+    }
+
+    {estPresent(a.data.resume) && <p class="mt-4 text-lg leading-relaxed text-encre/85">{a.data.resume}</p>}
+
+    <div class="prose mt-6 max-w-none">
+      <Content />
+    </div>
+
+    <nav class="mt-10 flex justify-between gap-4 border-t border-filet pt-6 text-sm" aria-label="Navigation entre les actualités">
+      {suivant && <a class="no-underline hover:underline" href={`/actualites/${suivant.id}/`}>← {suivant.data.titre}</a>}
+      {precedent && <a class="ml-auto no-underline hover:underline" href={`/actualites/${precedent.id}/`}>{precedent.data.titre} →</a>}
+    </nav>
+  </article>
+</BaseLayout>

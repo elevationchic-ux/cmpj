@@ -1,0 +1,55 @@
+---
+// Plan du site : liste complete des pages, filieres et actualites publiees.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import EnTetePage from '../components/EnTetePage.astro';
+import { getNavigation, getFilieresPubliees, getActualitesPubliees } from '../lib/contenu';
+
+const nav = await getNavigation();
+const filieres = await getFilieresPubliees();
+const actualites = await getActualitesPubliees();
+const pagesSpeciales = [
+  { titre: 'Mentions légales', url: '/mentions-legales/' },
+  { titre: 'Confidentialité', url: '/confidentialite/' },
+];
+const liensNav = (nav.liens ?? []).slice().sort((a, b) => (a.ordre ?? 99) - (b.ordre ?? 99));
+
+const titre = 'Plan du site | CMPJ Régional du Littoral';
+const description = 'Toutes les pages du site du CMPJ Régional du Littoral.';
+const fil = [{ titre: 'Accueil', url: '/' }, { titre: 'Plan du site' }];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre="Plan du site" chapeau={description} fil={fil} />
+
+  <div class="section-titre mx-auto max-w-4xl space-y-8 px-4 py-10">
+    <section>
+      <h2>Sections</h2>
+      <ul class="mt-2 grid gap-1 sm:grid-cols-2">
+        {liensNav.map((l) => <li><a class="no-underline hover:underline" href={l.url}>{l.titre}</a></li>)}
+        {pagesSpeciales.map((l) => <li><a class="no-underline hover:underline" href={l.url}>{l.titre}</a></li>)}
+      </ul>
+    </section>
+
+    {
+      filieres.length > 0 && (
+        <section>
+          <h2>Filières</h2>
+          <ul class="mt-2 grid gap-1 sm:grid-cols-2">
+            {filieres.map((f) => <li><a class="no-underline hover:underline" href={`/formations/${f.data.slug ?? f.id}/`}>{f.data.titre}</a></li>)}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      actualites.length > 0 && (
+        <section>
+          <h2 class="text-vert-nuit">Actualités</h2>
+          <ul class="mt-2 grid gap-1 sm:grid-cols-2">
+            {actualites.map((a) => <li><a class="no-underline hover:underline" href={`/actualites/${a.id}/`}>{a.data.titre}</a></li>)}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>

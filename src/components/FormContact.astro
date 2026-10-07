@@ -1,0 +1,48 @@
+---
+// Formulaire de contact. Fonctionne sans JavaScript ; ameliore par un envoi en fetch si disponible.
+const t = Math.floor(Date.now() / 1000);
+---
+<form data-form data-action="/api/contact" method="post" class="space-y-4">
+  <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute left-[-9999px] h-0 w-0 opacity-0" />
+  <input type="hidden" name="t" value={t} />
+
+  <div>
+    <label for="c-nom" class="block font-semibold">Nom <span class="text-brique" aria-hidden="true">*</span></label>
+    <input id="c-nom" name="nom" type="text" required autocomplete="name"
+      class="mt-1 w-full rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert" />
+    <p class="mt-1 hidden text-sm text-brique" data-err="nom"></p>
+  </div>
+
+  <div>
+    <label for="c-email" class="block font-semibold">Adresse électronique <span class="text-brique" aria-hidden="true">*</span></label>
+    <input id="c-email" name="email" type="email" required autocomplete="email"
+      class="mt-1 w-full rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert" />
+    <p class="mt-1 hidden text-sm text-brique" data-err="email"></p>
+  </div>
+
+  <div>
+    <label for="c-sujet" class="block font-semibold">Objet</label>
+    <input id="c-sujet" name="sujet" type="text"
+      class="mt-1 w-full rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert" />
+  </div>
+
+  <div>
+    <label for="c-message" class="block font-semibold">Message <span class="text-brique" aria-hidden="true">*</span></label>
+    <textarea id="c-message" name="message" rows="6" required
+      class="mt-1 w-full rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert"></textarea>
+    <p class="mt-1 hidden text-sm text-brique" data-err="message"></p>
+  </div>
+
+  <p class="text-sm text-gris">Les champs marqués d'un astérisque sont obligatoires.</p>
+
+  <div>
+    <button type="submit" class="rounded bg-vert px-5 py-2.5 font-semibold text-white hover:bg-vert-nuit">Envoyer</button>
+  </div>
+
+  <p role="status" aria-live="polite" class="hidden rounded border border-vert bg-vert-clair px-4 py-3 text-vert-nuit" data-ok>
+    Votre message a bien été transmis au Centre.
+  </p>
+  <p role="alert" class="hidden rounded border border-brique px-4 py-3 text-brique" data-fail>
+    L'envoi a échoué. Vérifiez les champs indiqués ou réessayez.
+  </p>
+</form>

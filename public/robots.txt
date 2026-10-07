@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cmpj-littoral.cm/sitemap-index.xml

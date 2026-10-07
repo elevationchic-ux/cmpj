@@ -1,0 +1,19 @@
+[
+  {
+    "id": "principale",
+    "liens": [
+      { "titre": "Le Centre", "url": "/le-centre/", "ordre": 1, "groupe": "decouvrir" },
+      { "titre": "Formations", "url": "/formations/", "ordre": 2, "groupe": "decouvrir" },
+      { "titre": "Programmes", "url": "/programmes/", "ordre": 3, "groupe": "decouvrir" },
+      { "titre": "Actualités", "url": "/actualites/", "ordre": 4, "groupe": "decouvrir" },
+      { "titre": "Galerie", "url": "/galerie/", "ordre": 5, "groupe": "decouvrir" },
+      { "titre": "Admission", "url": "/admission/", "ordre": 6, "groupe": "agir" },
+      { "titre": "Contact", "url": "/contact/", "ordre": 7, "groupe": "agir" }
+    ],
+    "liens_pied": [
+      { "titre": "Mentions légales", "url": "/mentions-legales/" },
+      { "titre": "Confidentialité", "url": "/confidentialite/" },
+      { "titre": "Plan du site", "url": "/plan-du-site/" }
+    ]
+  }
+]

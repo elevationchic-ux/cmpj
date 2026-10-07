@@ -1,0 +1,143 @@
+---
+// Page d'une filiere. Seules les informations confirmees par le Centre sont affichees.
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../../components/EnTetePage.astro';
+import IconFiliere from '../../components/IconFiliere.astro';
+import { estPresent, getFilieresPubliees, lienWhatsApp, getOrganisation } from '../../lib/contenu';
+
+export async function getStaticPaths() {
+  const filieres = await getCollection('filieres', (e) => e.data.publie === true);
+  return filieres.map((f) => ({
+    params: { slug: f.data.slug ?? f.id },
+    props: { f },
+  }));
+}
+
+const { f } = Astro.props;
+const d = f.data;
+const { Content } = await render(f);
+
+const toutes = await getFilieresPubliees();
+const index = toutes.findIndex((e) => (e.data.slug ?? e.id) === (d.slug ?? f.id));
+const precedente = index > 0 ? toutes[index - 1] : null;
+const suivante = index >= 0 && index < toutes.length - 1 ? toutes[index + 1] : null;
+
+const org = await getOrganisation();
+const whatsapp = lienWhatsApp(org.contacts?.whatsapp, `Bonjour, je souhaite des renseignements sur la filière ${d.titre} du CMPJ Régional du Littoral.`);
+
+const infos = [
+  { titre: 'Durée', valeur: d.duree },
+  { titre: "Niveau d'accès", valeur: d.niveau_acces },
+  { titre: 'Frais', valeur: d.frais },
+  { titre: 'Capacité', valeur: d.capacite },
+  { titre: 'Diplôme', valeur: d.diplome },
+].filter((i) => estPresent(i.valeur));
+
+const titre = `${d.titre} | Formations du CMPJ Régional du Littoral`;
+const description = estPresent(d.resume) ? d.resume : `La filière ${d.titre} au CMPJ Régional du Littoral, New-Bell, Douala.`;
+const fil = [{ titre: 'Accueil', url: '/' }, { titre: 'Formations', url: '/formations/' }, { titre: d.titre }];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre={d.titre} chapeau={description} fil={fil}>
+    {estPresent(d.icone) && (
+      <span slot="icone" class="grid h-12 w-12 shrink-0 place-items-center rounded bg-vert-clair text-vert">
+        <IconFiliere nom={String(d.icone)} classe="h-7 w-7" />
+      </span>
+    )}
+  </EnTetePage>
+
+  <article class="section-titre mx-auto max-w-3xl px-4 py-10">
+    {
+      estPresent(d.photo) && (
+        <figure class="mb-6">
+          <img src={d.photo} alt={d.photo_legende || d.titre} loading="lazy" width="1200" height="800" class="w-full rounded" />
+          {estPresent(d.photo_legende) && <figcaption class="mt-1 text-sm text-gris">{d.photo_legende}</figcaption>}
+        </figure>
+      )
+    }
+
+    {
+      estPresent(d.resume) || estPresent(f.body) ? (
+        <div class="prose max-w-none">
+          {estPresent(d.resume) && <p>{d.resume}</p>}
+          <Content />
+        </div>
+      ) : (
+        <p>La filière {d.titre} est dispensée au CMPJ Régional du Littoral. Le détail du programme, les conditions d'admission, les frais et le calendrier de la session sont communiqués par le secrétariat du Centre.</p>
+      )
+    }
+
+    {
+      infos.length > 0 && (
+        <table class="mt-8 w-full border-collapse text-left text-[0.98rem]">
+          <caption class="sr-only">Caractéristiques de la filière</caption>
+          <tbody>
+            {infos.map((i) => (
+              <tr>
+                <th scope="row" class="border border-filet bg-vert-clair px-3 py-2 font-semibold">{i.titre}</th>
+                <td class="border border-filet px-3 py-2">{String(i.valeur)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )
+    }
+
+    {
+      estPresent(d.conditions_admission) && (
+        <section class="mt-8">
+          <h2>Conditions d'admission</h2>
+          <ul class="list-disc pl-5">
+            {d.conditions_admission!.map((c) => <li>{c}</li>)}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      estPresent(d.debouches) && (
+        <section class="mt-6">
+          <h2>Débouchés</h2>
+          <ul class="list-disc pl-5">
+            {d.debouches!.map((c) => <li>{c}</li>)}
+          </ul>
+        </section>
+      )
+    }
+
+    <div class="mt-10 flex flex-wrap gap-2 border-t border-filet pt-6">
+      <a href="/admission/" class="rounded bg-brique px-4 py-2.5 font-semibold text-white no-underline hover:bg-vert-nuit">Se préinscrire</a>
+      <a href="/contact/" class="rounded border border-filet px-4 py-2.5 font-semibold text-encre no-underline hover:bg-vert-clair">Écrire au Centre</a>
+    </div>
+    {whatsapp && (
+      <p class="mt-4 text-sm">
+        Une question sur cette formation ?
+        <a class="font-semibold no-underline hover:underline" href={whatsapp} target="_blank" rel="noopener noreferrer">Écrire sur WhatsApp</a>.
+      </p>
+    )}
+    {estPresent(d.contact) && <p class="mt-4 text-sm">{d.contact}</p>}
+
+    {(precedente || suivante) && (
+      <nav aria-label="Navigation entre les filières" class="mt-10 grid gap-3 border-t border-filet pt-6 sm:grid-cols-2">
+        {precedente && (
+          <a href={`/formations/${precedente.data.slug ?? precedente.id}/`} class="rounded border border-filet bg-white px-4 py-3 no-underline hover:border-vert">
+            <span class="block text-xs uppercase tracking-wide text-gris">Filière précédente</span>
+            <span class="mt-0.5 block font-semibold text-vert-nuit">{precedente.data.titre}</span>
+          </a>
+        )}
+        {suivante && (
+          <a href={`/formations/${suivante.data.slug ?? suivante.id}/`} class="rounded border border-filet bg-white px-4 py-3 text-right no-underline hover:border-vert sm:text-right">
+            <span class="block text-xs uppercase tracking-wide text-gris">Filière suivante</span>
+            <span class="mt-0.5 block font-semibold text-vert-nuit">{suivante.data.titre}</span>
+          </a>
+        )}
+      </nav>
+    )}
+
+    <p class="mt-8 text-center text-sm">
+      <a href="#haut" class="font-semibold no-underline hover:underline">Retour en haut de la page</a>
+    </p>
+  </article>
+</BaseLayout>

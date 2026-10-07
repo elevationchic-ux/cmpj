@@ -1,0 +1,119 @@
+---
+// Contact : coordonnees reelles, carte si fournie, reseaux et formulaire.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import EnTetePage from '../components/EnTetePage.astro';
+import FormContact from '../components/FormContact.astro';
+import FormEnhancement from '../components/FormEnhancement.astro';
+import { getOrganisation, estPresent, lienWhatsApp } from '../lib/contenu';
+
+const org = await getOrganisation();
+const adr = org.adresse ?? {};
+const contacts = org.contacts ?? {};
+const reseaux = org.reseaux ?? {};
+const gps = org.coordinatees_gps ?? {};
+const whatsapp = lienWhatsApp(contacts.whatsapp, 'Bonjour, je souhaite contacter le CMPJ Régional du Littoral.');
+
+const ligneAdresse = [adr.rue, adr.repere, adr.quartier, adr.ville, adr.region, adr.pays]
+  .filter((p) => estPresent(p))
+  .join(', ');
+
+const aUneCoordonnee = estPresent(ligneAdresse) || estPresent(contacts.telephones) || estPresent(contacts.email) || estPresent(org.horaires);
+const carte = estPresent(gps.latitude) && estPresent(gps.longitude);
+
+const titre = 'Contact | CMPJ Régional du Littoral';
+const description = 'Contacter le CMPJ Régional du Littoral à New-Bell, Douala : adresse du Centre et formulaire de contact.';
+const fil = [{ titre: 'Accueil', url: '/' }, { titre: 'Contact' }];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre="Contact" chapeau={description} fil={fil} />
+
+  <div class="section-titre mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-2">
+    <section aria-labelledby="coordonnees">
+      <h2 id="coordonnees" class="mt-0">Coordonnées</h2>
+      {aUneCoordonnee ? (
+        <dl class="mt-4 space-y-4">
+          {estPresent(ligneAdresse) && (
+            <div>
+              <dt class="font-semibold">Adresse</dt>
+              <dd>{ligneAdresse}</dd>
+            </div>
+          )}
+          {estPresent(org.horaires) && (
+            <div>
+              <dt class="font-semibold">Horaires d'ouverture</dt>
+              <dd>{org.horaires}</dd>
+            </div>
+          )}
+          {estPresent(contacts.telephones) && (
+            <div>
+              <dt class="font-semibold">Téléphone</dt>
+              <dd>
+                <ul class="space-y-0.5">
+                  {contacts.telephones?.map((t: string) => (
+                    <li><a class="no-underline hover:underline" href={`tel:${t.replace(/[^+0-9]/g, '')}`}>{t}</a></li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+          )}
+          {estPresent(contacts.email) && (
+            <div>
+              <dt class="font-semibold">Adresse électronique</dt>
+              <dd><a class="no-underline hover:underline" href={`mailto:${contacts.email}`}>{contacts.email}</a></dd>
+            </div>
+          )}
+        </dl>
+      ) : (
+        <p class="mt-4">Les coordonnées complètes du secrétariat sont communiquées par la direction du Centre.</p>
+      )}
+
+      {whatsapp && (
+        <p class="mt-6">
+          <a href={whatsapp} class="inline-flex items-center gap-2 rounded bg-[#128C7E] px-4 py-2.5 font-semibold text-white no-underline hover:bg-[#0f7a6e]" target="_blank" rel="noopener noreferrer">
+            Écrire sur WhatsApp
+          </a>
+        </p>
+      )}
+
+      <ul class="mt-6 flex flex-wrap gap-4 text-sm">
+        {estPresent(reseaux.facebook) && <li><a class="font-semibold no-underline hover:underline" href={reseaux.facebook} target="_blank" rel="noopener noreferrer">Facebook</a></li>}
+        {estPresent(reseaux.tiktok) && <li><a class="font-semibold no-underline hover:underline" href={reseaux.tiktok} target="_blank" rel="noopener noreferrer">TikTok</a></li>}
+      </ul>
+
+      {carte && (
+        <div class="mt-6">
+          <button type="button" data-carte={gps.latitude} data-lon={gps.longitude}
+            class="rounded border border-vert px-4 py-2 text-sm font-semibold text-vert no-underline hover:bg-vert-clair">
+            Afficher le plan d'accès
+          </button>
+          <div data-carte-zone class="mt-3 overflow-hidden rounded border border-filet"></div>
+        </div>
+      )}
+    </section>
+
+    <section aria-labelledby="ecrire" class="rounded border border-filet bg-white p-6">
+      <h2 id="ecrire" class="mt-0 text-vert-nuit">Écrire au Centre</h2>
+      <p class="mb-4 text-sm text-encre/80">Décrivez votre demande. Le secrétariat du Centre la reçoit.</p>
+      <FormContact />
+    </section>
+  </div>
+
+  <FormEnhancement />
+  {carte && (
+    <script>
+      const btn = document.querySelector<HTMLButtonElement>('[data-carte]');
+      const zone = document.querySelector<HTMLElement>('[data-carte-zone]');
+      if (btn && zone) {
+        btn.addEventListener('click', () => {
+          const lat = btn.getAttribute('data-carte');
+          const lon = btn.getAttribute('data-lon');
+          const d = 0.01;
+          const bbox = [Number(lon) - d, Number(lat) - d, Number(lon) + d, Number(lat) + d].join(',');
+          zone.innerHTML = `<iframe title="Plan d'accès" loading="lazy" width="100%" height="360" style="border:0" src="https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&amp;layer=mapnik&marker=${lat},${lon}"></iframe>`;
+          btn.remove();
+        });
+      }
+    </script>
+  )}
+</BaseLayout>

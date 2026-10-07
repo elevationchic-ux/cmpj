@@ -1,0 +1,37 @@
+---
+// En-tete de page interieure : titre, chapeau, fil d'Ariane optionnel.
+import { estPresent } from '../lib/contenu';
+
+interface Fil { titre: string; url?: string }
+interface Props {
+  titre: string;
+  chapeau?: string | null;
+  fil?: Fil[];
+}
+const { titre, chapeau, fil = [] } = Astro.props;
+---
+
+<div class="border-b border-filet bg-white">
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:py-12">
+    {
+      fil.length > 0 && (
+        <nav aria-label="Fil d'Ariane" class="mb-3 text-sm text-gris">
+          <ol class="flex flex-wrap gap-1">
+            {fil.map((f, i) => (
+              <li class="flex items-center gap-1">
+                {i > 0 && <span aria-hidden="true">/</span>}
+                {f.url ? <a class="no-underline hover:underline" href={f.url}>{f.titre}</a> : <span aria-current="page">{f.titre}</span>}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+    <div class="flex items-center gap-3">
+      <slot name="icone" />
+      <h1 class="text-vert-nuit">{titre}</h1>
+    </div>
+    {estPresent(chapeau) && <p class="mt-2 max-w-2xl text-lg text-encre/80">{chapeau}</p>}
+    <div class="mt-4 h-0.5 w-16 bg-jaune" aria-hidden="true"></div>
+  </div>
+</div>

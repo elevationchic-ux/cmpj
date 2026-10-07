@@ -1,0 +1,71 @@
+---
+// Formulaire de pre-inscription. Les fileires proposees proviennent du contenu du Centre.
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  filieres: CollectionEntry<'filieres'>[];
+}
+const { filieres = [] } = Astro.props;
+const t = Math.floor(Date.now() / 1000);
+const champ = 'mt-1 w-full rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert';
+const erreur = 'mt-1 hidden text-sm text-brique';
+---
+<form data-form data-action="/api/inscription" method="post" class="space-y-4">
+  <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute left-[-9999px] h-0 w-0 opacity-0" />
+  <input type="hidden" name="t" value={t} />
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="i-nom" class="block font-semibold">Nom <span class="text-brique" aria-hidden="true">*</span></label>
+      <input id="i-nom" name="nom" type="text" required autocomplete="family-name" class={champ} />
+      <p class={erreur} data-err="nom"></p>
+    </div>
+    <div>
+      <label for="i-prenom" class="block font-semibold">Prénom <span class="text-brique" aria-hidden="true">*</span></label>
+      <input id="i-prenom" name="prenom" type="text" required autocomplete="given-name" class={champ} />
+      <p class={erreur} data-err="prenom"></p>
+    </div>
+    <div>
+      <label for="i-email" class="block font-semibold">Adresse électronique <span class="text-brique" aria-hidden="true">*</span></label>
+      <input id="i-email" name="email" type="email" required autocomplete="email" class={champ} />
+      <p class={erreur} data-err="email"></p>
+    </div>
+    <div>
+      <label for="i-tel" class="block font-semibold">Téléphone <span class="text-brique" aria-hidden="true">*</span></label>
+      <input id="i-tel" name="telephone" type="tel" required autocomplete="tel" class={champ} />
+      <p class={erreur} data-err="telephone"></p>
+    </div>
+  </div>
+
+  <div>
+    <label for="i-filiere" class="block font-semibold">Filière souhaitée <span class="text-brique" aria-hidden="true">*</span></label>
+    <select id="i-filiere" name="filiere" required class={champ}>
+      <option value="">Choisir une filière</option>
+      {filieres.map((f) => <option value={f.data.titre}>{f.data.titre}</option>)}
+    </select>
+    <p class={erreur} data-err="filiere"></p>
+  </div>
+
+  <div>
+    <label for="i-annee" class="block font-semibold">Année de naissance</label>
+    <input id="i-annee" name="annee" type="number" min="1960" max="2020" inputmode="numeric" class={champ} />
+  </div>
+
+  <div>
+    <label for="i-commentaire" class="block font-semibold">Précision utile</label>
+    <textarea id="i-commentaire" name="commentaire" rows="3" class={champ}></textarea>
+  </div>
+
+  <p class="text-sm text-gris">Cette pré-inscription prépare le dépôt du dossier et ne vaut pas inscription définitive. Les informations saisies ne sont pas publiées.</p>
+
+  <div>
+    <button type="submit" class="rounded bg-vert px-5 py-2.5 font-semibold text-white hover:bg-vert-nuit">Envoyer la pré-inscription</button>
+  </div>
+
+  <p role="status" aria-live="polite" tabindex="-1" class="hidden rounded border border-vert bg-vert-clair px-4 py-3 text-vert-nuit" data-ok>
+    Votre pré-inscription a bien été enregistrée. Retirez ensuite le dossier auprès du secrétariat pour finaliser l'inscription.
+  </p>
+  <p role="alert" class="hidden rounded border border-brique px-4 py-3 text-brique" data-fail>
+    L'envoi a échoué. Vérifiez les champs indiqués ou réessayez.
+  </p>
+</form>

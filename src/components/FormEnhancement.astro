@@ -1,0 +1,61 @@
+---
+// Amelioration progressive des formulaires (form[data-form]). Sans JS, le POST natif et la
+// page d'accuse du serveur prennent le relais.
+---
+<script>
+  function rehausser(form: HTMLFormElement) {
+    const ok = form.querySelector<HTMLElement>('[data-ok]');
+    const fail = form.querySelector<HTMLElement>('[data-fail]');
+    const action = form.getAttribute('data-action') || form.action;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      if (ok) ok.classList.add('hidden');
+      if (fail) fail.classList.add('hidden');
+      form.querySelectorAll<HTMLElement>('[data-err]').forEach((el) => el.classList.add('hidden'));
+
+      const bouton = form.querySelector<HTMLButtonElement>('button[type=submit]');
+      if (bouton) bouton.disabled = true;
+
+      try {
+        const res = await fetch(action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { accept: 'application/json', 'x-requested-with': 'fetch' },
+        });
+        const type = res.headers.get('content-type') || '';
+        const data = type.includes('application/json') ? await res.json() : { ok: false };
+        if (data.ok) {
+          form.reset();
+          if (ok) {
+            ok.classList.remove('hidden');
+            ok.focus?.();
+          }
+        } else {
+          const erreurs = data.erreurs || {};
+          Object.entries(erreurs).forEach(([champ, msg]) => {
+            const cible = form.querySelector<HTMLElement>(`[data-err="${champ}"]`);
+            if (cible) {
+              cible.textContent = String(msg);
+              cible.classList.remove('hidden');
+            }
+          });
+          if (fail) fail.classList.remove('hidden');
+          const premier = form.querySelector<HTMLElement>('[data-err]:not(.hidden)');
+          const id = premier?.previousElementSibling?.id;
+          if (id) document.getElementById(id)?.focus();
+        }
+      } catch {
+        if (fail) fail.classList.remove('hidden');
+      } finally {
+        if (bouton) bouton.disabled = false;
+      }
+    });
+  }
+
+  document.querySelectorAll<HTMLFormElement>('form[data-form]').forEach(rehausser);
+</script>

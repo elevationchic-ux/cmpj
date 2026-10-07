@@ -1,0 +1,100 @@
+---
+// Actualités : liste chronologique, recherche et filtre par categorie, plus agenda des evenements.
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../../components/EnTetePage.astro';
+import { getActualitesPubliees, estPresent, formatDate } from '../../lib/contenu';
+
+const actualites = await getActualitesPubliees();
+const categories = Array.from(new Set(actualites.map((a) => a.data.categorie).filter((c) => estPresent(c)))) as string[];
+
+const evenements = (await getCollection('evenements', (e) => e.data.publie === true))
+  .map((e) => ({ e, date: new Date(e.data.date) }))
+  .filter((x) => x.date.getTime() >= Date.now())
+  .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+const titre = 'Actualités et événements | CMPJ Régional du Littoral';
+const description = 'Annonces, cérémonies et informations publiées par le CMPJ Régional du Littoral.';
+const fil = [{ titre: 'Accueil', url: '/' }, { titre: 'Actualités' }];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre="Actualités et événements" chapeau={description} fil={fil} />
+
+  <div class="section-titre mx-auto max-w-4xl px-4 py-10">
+    {
+      evenements.length > 0 && (
+        <section class="mb-10">
+          <h2>À venir</h2>
+          <ul class="mt-3 divide-y divide-filet border-y border-filet">
+            {evenements.map(({ e, date }) => (
+              <li class="flex flex-wrap gap-x-4 gap-y-1 py-3">
+                <time class="font-semibold text-vert">{formatDate(date)}</time>
+                <div>
+                  <p class="font-medium">{e.data.titre}</p>
+                  {estPresent(e.data.lieu) && <p class="text-sm text-gris">{e.data.lieu}{estPresent(e.data.heure) ? `, ${e.data.heure}` : ''}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      actualites.length > 0 ? (
+        <>
+          <div class="mb-6 flex flex-wrap items-end gap-4">
+            <div class="grow max-w-sm">
+              <label for="q" class="block text-sm font-semibold">Rechercher</label>
+              <input id="q" type="search" placeholder="Titre ou résumé" class="mt-1 w-full rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert" data-q />
+            </div>
+            {
+              categories.length > 0 && (
+                <div>
+                  <label for="cat" class="block text-sm font-semibold">Catégorie</label>
+                  <select id="cat" class="mt-1 rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert" data-cat>
+                    <option value="">Toutes</option>
+                    {categories.map((c) => <option value={c}>{c}</option>)}
+                  </select>
+                </div>
+              )
+            }
+          </div>
+
+          <ul class="divide-y divide-filet border-y border-filet" data-liste>
+            {actualites.map((a) => (
+              <li class="py-5" data-titre={a.data.titre.toLowerCase()} data-cat={(a.data.categorie ?? '').toLowerCase()} data-resume={(a.data.resume ?? '').toLowerCase()}>
+                <a href={`/actualites/${a.id}/`} class="group block no-underline">
+                  <time class="text-sm text-gris">{formatDate(a.data.date)}</time>
+                  {estPresent(a.data.categorie) && <span class="ml-2 text-xs font-semibold uppercase tracking-wide text-vert">{a.data.categorie}</span>}
+                  <h3 class="mt-1 text-lg text-vert-nuit group-hover:underline">{a.data.titre}</h3>
+                  {estPresent(a.data.resume) && <p class="mt-1 text-encre/80">{a.data.resume}</p>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p>Les annonces, cérémonies et informations du Centre sont publiées sur cette page, dans l'ordre chronologique.</p>
+      )
+    }
+  </div>
+
+  <script>
+    const q = document.querySelector<HTMLInputElement>('[data-q]');
+    const cat = document.querySelector<HTMLSelectElement>('[data-cat]');
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-liste] > li'));
+    const appliquer = () => {
+      const texte = (q?.value || '').trim().toLowerCase();
+      const categorie = (cat?.value || '').toLowerCase();
+      items.forEach((li) => {
+        const okTexte = [li.dataset.titre, li.dataset.resume].some((v) => (v || '').includes(texte));
+        const okCat = !categorie || (li.dataset.cat || '') === categorie;
+        li.style.display = okTexte && okCat ? '' : 'none';
+      });
+    };
+    q?.addEventListener('input', appliquer);
+    cat?.addEventListener('change', appliquer);
+  </script>
+</BaseLayout>

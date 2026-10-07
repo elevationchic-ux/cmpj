@@ -1,0 +1,36 @@
+[
+  {
+    "id": "coordonnees",
+    "denomination_courte": "CMPJ Régional du Littoral",
+    "denomination_officielle": "Centre Multifonctionnel de Promotion des Jeunes (CMPJ) Régional du Littoral, New-Bell, Douala",
+    "categorie": "Centre de catégorie régionale",
+    "tutelle": {
+      "ministere": "Ministère de la Jeunesse et de l'Éducation Civique",
+      "sigle": "MINJEC",
+      "republique": "République du Cameroun"
+    },
+    "pays": "Cameroun",
+    "adresse": {
+      "rue": null,
+      "quartier": "New-Bell",
+      "repere": null,
+      "ville": "Douala",
+      "region": "Littoral",
+      "pays": "Cameroun"
+    },
+    "contacts": {
+      "telephones": [],
+      "whatsapp": null,
+      "email": null
+    },
+    "horaires": null,
+    "reseaux": {
+      "facebook": "https://www.facebook.com/cmpjregionaldoualanewbell/",
+      "tiktok": null
+    },
+    "coordinatees_gps": {
+      "latitude": null,
+      "longitude": null
+    }
+  }
+]

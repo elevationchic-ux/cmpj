@@ -1,0 +1,127 @@
+---
+// Formations : carte sur mobile, tableau des filieres en grand ecran, colonne affichee seulement si renseignee.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../../components/EnTetePage.astro';
+import IconFiliere from '../../components/IconFiliere.astro';
+import { getFilieresPubliees, estPresent } from '../../lib/contenu';
+
+const filieres = await getFilieresPubliees();
+const plier = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+const colonnes = [
+  { cle: 'duree', titre: 'Durée' },
+  { cle: 'niveau_acces', titre: "Niveau d'accès" },
+  { cle: 'frais', titre: 'Frais' },
+].filter((c) => filieres.some((f) => estPresent((f.data as any)[c.cle])));
+
+const titre = 'Formations | CMPJ Régional du Littoral';
+const description = "Liste des filières de formation professionnelles proposées par le CMPJ Régional du Littoral à Douala.";
+const fil = [{ titre: 'Accueil', url: '/' }, { titre: 'Formations' }];
+
+// Extrait court pour les cartes mobiles, tire du resume.
+const extrait = (r: string | null | undefined): string => {
+  if (!estPresent(r)) return '';
+  const s = String(r);
+  return s.length > 150 ? `${s.slice(0, 150).replace(/\s+\S*$/, '')}…` : s;
+};
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre="Formations" chapeau={description} fil={fil} />
+
+  <div class="mx-auto max-w-6xl px-4 py-10">
+    {
+      filieres.length === 0 ? (
+        <p>Le Centre communique ses filières ouvertes à la formation sur cette page.</p>
+      ) : (
+        <>
+          <div class="mb-6 max-w-sm">
+            <label for="filtre" class="block text-sm font-semibold">Rechercher une filière</label>
+            <input id="filtre" type="search" placeholder="Nom de la filière"
+              class="mt-1 w-full rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert" data-filtre />
+          </div>
+
+          {/* Cartes : mobile et tablette. */}
+          <ul class="grid gap-3 sm:hidden" data-cartes>
+            {filieres.map((f) => (
+              <li data-item data-nom={plier(f.data.titre)} class="rounded border border-filet bg-white p-4">
+                <a href={`/formations/${f.data.slug ?? f.id}/`} class="flex items-center gap-3 no-underline">
+                  {estPresent(f.data.icone) && (
+                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded bg-vert-clair text-vert">
+                      <IconFiliere nom={String(f.data.icone)} classe="h-6 w-6" />
+                    </span>
+                  )}
+                  <span class="font-serif text-base font-semibold text-vert-nuit">{f.data.titre}</span>
+                </a>
+                {estPresent(f.data.resume) && <p class="mt-2 text-sm text-encre/80">{extrait(f.data.resume)}</p>}
+                <a href={`/formations/${f.data.slug ?? f.id}/`} class="mt-2 inline-block text-sm font-semibold text-brique no-underline hover:underline">Voir la filière</a>
+              </li>
+            ))}
+          </ul>
+
+          {/* Tableau : grand ecran. */}
+          <div class="hidden overflow-x-auto sm:block">
+            <table class="w-full border-collapse text-left text-[0.98rem]" data-table>
+              <caption class="sr-only">Filières de formation du Centre</caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="border border-filet bg-vert-clair px-3 py-2 font-semibold">Filière</th>
+                  {colonnes.map((c) => (
+                    <th scope="col" class="border border-filet bg-vert-clair px-3 py-2 font-semibold">{c.titre}</th>
+                  ))}
+                  <th scope="col" class="border border-filet bg-vert-clair px-3 py-2 font-semibold">Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filieres.map((f) => (
+                  <tr class="hover:bg-fond" data-item data-nom={plier(f.data.titre)}>
+                    <th scope="row" class="border border-filet px-3 py-2 font-medium">
+                      <span class="flex items-center gap-2">
+                        {estPresent(f.data.icone) && <IconFiliere nom={String(f.data.icone)} classe="h-5 w-5 text-vert" />}
+                        {f.data.titre}
+                      </span>
+                    </th>
+                    {colonnes.map((c) => (
+                      <td class="border border-filet px-3 py-2 text-encre/80">{estPresent((f.data as any)[c.cle]) ? String((f.data as any)[c.cle]) : 'Non précisé'}</td>
+                    ))}
+                    <td class="border border-filet px-3 py-2">
+                      <a class="font-semibold no-underline hover:underline" href={`/formations/${f.data.slug ?? f.id}/`}>Voir</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-4 hidden text-sm text-gris" data-vide>Aucune filière ne correspond à votre recherche.</p>
+          <p class="mt-6 text-sm text-encre/80">
+            Les durées, niveaux d'accès et frais sont précisés pour chaque session par la direction du Centre et rappelés au secrétariat lors du retrait du dossier.
+          </p>
+        </>
+      )
+    }
+  </div>
+
+  <script>
+    const plier = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const champ = document.querySelector<HTMLInputElement>('[data-filtre]');
+    const vide = document.querySelector<HTMLElement>('[data-vide]');
+    const table = document.querySelector<HTMLElement>('[data-table]');
+    const cartes = document.querySelector<HTMLElement>('[data-cartes]');
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-item]'));
+    if (champ) {
+      champ.addEventListener('input', () => {
+        const q = plier(champ.value.trim());
+        let visibles = 0;
+        items.forEach((el) => {
+          const nom = el.getAttribute('nom') || '';
+          const ok = nom.includes(q);
+          el.style.display = ok ? '' : 'none';
+          if (ok) visibles++;
+        });
+        if (vide) vide.classList.toggle('hidden', visibles !== 0);
+        if (table) table.style.display = visibles === 0 ? 'none' : '';
+        if (cartes) cartes.style.display = visibles === 0 ? 'none' : '';
+      });
+    }
+  </script>
+</BaseLayout>

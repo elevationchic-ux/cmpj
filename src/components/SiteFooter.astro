@@ -1,0 +1,86 @@
+---
+// Pied de page : identite complete, coordonnees reelles, liens utiles et reseaux.
+import { getNavigation, estPresent } from '../lib/contenu';
+
+const { org } = Astro.props;
+const nav = await getNavigation();
+const pied = nav.liens_pied ?? [];
+
+const adr = org.adresse ?? {};
+const contacts = org.contacts ?? {};
+const reseaux = org.reseaux ?? {};
+const annee = new Date().getFullYear();
+
+const ligneAdresse = [adr.rue, adr.repere, adr.quartier, adr.ville, adr.region, adr.pays]
+  .filter((p) => estPresent(p))
+  .join(', ');
+---
+
+<footer class="mt-16 border-t-2 border-jaune bg-vert-nuit pb-24 text-white/90 lg:pb-12">
+  <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-3">
+    <div>
+      <p class="font-serif text-lg font-bold text-white">{org.denomination_courte ?? 'CMPJ Régional du Littoral'}</p>
+      <p class="mt-1 text-sm leading-relaxed text-white/70">{org.denomination_officielle}</p>
+      {estPresent(org.categorie) && <p class="mt-2 text-sm text-white/70">{org.categorie}</p>}
+    </div>
+
+    <div>
+      <h2 class="mb-2 font-serif text-base font-semibold text-white">Nous situer et joindre</h2>
+      {estPresent(ligneAdresse) && <p class="text-sm text-white/80">{ligneAdresse}</p>}
+      {estPresent(org.horaires) && <p class="mt-1 text-sm text-white/80">{org.horaires}</p>}
+      {
+        estPresent(contacts.telephones) && (
+          <ul class="mt-1 space-y-0.5 text-sm">
+            {contacts.telephones.map((t: string) => (
+              <li>
+                <a class="text-white/80 no-underline hover:underline" href={`tel:${t.replace(/[^+0-9]/g, '')}`}>{t}</a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      {estPresent(contacts.email) && (
+        <p class="mt-1 text-sm">
+          <a class="text-white/80 no-underline hover:underline" href={`mailto:${contacts.email}`}>{contacts.email}</a>
+        </p>
+      )}
+      {
+        !estPresent(ligneAdresse) && !estPresent(contacts.telephones) && !estPresent(contacts.email) && (
+          <p class="text-sm text-white/70">Coordonnées du secrétariat communiquées sur la page Contact.</p>
+        )
+      }
+    </div>
+
+    <div>
+      <h2 class="mb-2 font-serif text-base font-semibold text-white">Suivre le Centre</h2>
+      <ul class="space-y-1 text-sm">
+        {estPresent(reseaux.facebook) && (
+          <li><a class="text-white/80 no-underline hover:underline" href={reseaux.facebook} rel="noopener noreferrer" target="_blank">Page Facebook</a></li>
+        )}
+        {estPresent(reseaux.tiktok) && (
+          <li><a class="text-white/80 no-underline hover:underline" href={reseaux.tiktok} rel="noopener noreferrer" target="_blank">Compte TikTok</a></li>
+        )}
+      </ul>
+      {pied.length > 0 && (
+        <nav class="mt-4" aria-label="Liens de pied de page">
+          <ul class="space-y-1 text-sm">
+            {pied.map((lien) => (
+              <li><a class="text-white/80 no-underline hover:underline" href={lien.url}>{lien.titre}</a></li>
+            ))}
+          </ul>
+        </nav>
+      )}
+    </div>
+  </div>
+
+  <div class="border-t border-white/15">
+    <div class="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
+      <p>
+        {estPresent(org.tutelle?.ministere)
+          ? `${org.tutelle.ministere} ${estPresent(org.tutelle?.sigle) ? `(${org.tutelle.sigle})` : ''}`
+          : ''}
+      </p>
+      <p>© {annee} {org.denomination_courte ?? 'CMPJ Régional du Littoral'}.</p>
+    </div>
+  </div>
+</footer>

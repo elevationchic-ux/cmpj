@@ -1,0 +1,21 @@
+---
+// Page 500. Message sobre, dans le ton du site.
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const titre = 'Erreur du site | CMPJ Régional du Littoral';
+---
+
+<BaseLayout title={titre} description="Une erreur est survenue lors de l'affichage de la page." noindex>
+  <div class="mx-auto max-w-3xl px-4 py-16">
+    <p class="font-serif text-5xl font-bold text-vert-nuit">500</p>
+    <h1 class="mt-3 text-vert-nuit">Une erreur est survenue</h1>
+    <p class="mt-3 text-lg text-encre/85">
+      Le serveur n'a pas pu traiter la demande. Réessayez dans quelques instants.
+      Si le problème persiste, vous pouvez contacter le Centre par un autre moyen.
+    </p>
+    <div class="mt-6 flex flex-wrap gap-2">
+      <a href="/" class="rounded bg-vert px-4 py-2.5 font-semibold text-white no-underline hover:bg-vert-nuit">Retour à l'accueil</a>
+      <a href="/contact/" class="rounded border border-filet px-4 py-2.5 font-semibold text-encre no-underline hover:bg-vert-clair">Contacter le Centre</a>
+    </div>
+  </div>
+</BaseLayout>

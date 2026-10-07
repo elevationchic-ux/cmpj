@@ -1,0 +1,165 @@
+---
+// Accueil : identite du Centre, mission, acces rapides, coordonnees si confirmees, dernieres actualites.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import IconFiliere from '../components/IconFiliere.astro';
+import { getOrganisation, getSite, estPresent, getActualitesPubliees, getFilieresPubliees, formatDate, nombreEnLettres } from '../lib/contenu';
+
+const org = await getOrganisation();
+const site = await getSite();
+const actualites = (await getActualitesPubliees()).slice(0, 3);
+const filieres = await getFilieresPubliees();
+
+const adr = org.adresse ?? {};
+const contacts = org.contacts ?? {};
+const titre = `${org.denomination_courte ?? 'CMPJ Régional du Littoral'}, ${adr.ville ?? 'Douala'}`;
+const description = site.description_site;
+
+// Accroche : fait établi, construit a partir des donnees reelles du Centre.
+const lieu = [adr.quartier, adr.ville].filter((p) => estPresent(p)).join(', ');
+const nb = filieres.length;
+const accroche = nb > 0 ? `${nombreEnLettres(nb)} ${nb > 1 ? 'métiers à apprendre' : 'métier à apprendre'}, un Centre${estPresent(lieu) ? ` à ${lieu}` : ''}.` : null;
+
+const chiffres = (site.chiffres_cles ?? []).filter((c) => estPresent(c?.valeur) && estPresent(c?.label));
+---
+
+<BaseLayout title={titre} description={description}>
+  {accroche && (
+    <section class="bg-vert text-white">
+      <div class="mx-auto max-w-6xl px-4 py-14 lg:py-20">
+        <p class="font-serif text-3xl leading-tight font-semibold text-balance sm:text-4xl lg:text-5xl">
+          {accroche}
+        </p>
+        <div class="mt-5 h-0.5 w-16 bg-jaune" aria-hidden="true"></div>
+      </div>
+    </section>
+  )}
+
+  <section class="border-b border-filet bg-white">
+    <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[1.4fr_1fr] lg:py-16">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-vert">{estPresent(org.categorie) ? org.categorie : 'Centre de formation'}</p>
+        <h1 class="mt-2 text-vert-nuit">{org.denomination_officielle}</h1>
+        {estPresent(site.mission) && (
+          <p class="mt-4 max-w-xl text-lg leading-relaxed text-encre/85">{site.mission}</p>
+        )}
+
+        <div class="mt-6 flex flex-wrap gap-2">
+          <a href="/formations/" class="rounded bg-brique px-4 py-2.5 font-semibold text-white no-underline hover:bg-vert-nuit">Voir les filières</a>
+          <a href="/admission/" class="rounded border border-vert px-4 py-2.5 font-semibold text-vert no-underline hover:bg-vert-clair">Pré-inscription en ligne</a>
+          <a href="/contact/" class="rounded border border-filet px-4 py-2.5 font-semibold text-encre no-underline hover:bg-vert-clair">Écrire au Centre</a>
+        </div>
+      </div>
+
+      <aside class="rounded border border-filet bg-fond p-5">
+        <h2 class="font-serif text-base font-semibold text-vert-nuit">Informations pratiques</h2>
+        <dl class="mt-3 space-y-3 text-sm">
+          {estPresent(adr.quartier) && (
+            <div><dt class="font-semibold text-encre">Adresse</dt>
+              <dd class="text-encre/80">{[adr.rue, adr.repere, adr.quartier, adr.ville].filter((p) => estPresent(p)).join(', ')}</dd></div>
+          )}
+          {estPresent(org.horaires) && (
+            <div><dt class="font-semibold text-encre">Horaires</dt><dd class="text-encre/80">{org.horaires}</dd></div>
+          )}
+          {estPresent(contacts.telephones) && (
+            <div><dt class="font-semibold text-encre">Téléphone</dt>
+              <dd class="text-encre/80">
+                {contacts.telephones?.map((t: string, i: number) => (
+                  <>{i > 0 && <span>, </span>}<a class="no-underline hover:underline" href={`tel:${t.replace(/[^+0-9]/g, '')}`}>{t}</a></>
+                ))}
+              </dd></div>
+          )}
+          {estPresent(org.tutelle?.ministere) && (
+            <div><dt class="font-semibold text-encre">Tutelle</dt>
+              <dd class="text-encre/80">{org.tutelle?.ministere}{estPresent(org.tutelle?.sigle) ? ` (${org.tutelle?.sigle})` : ''}</dd></div>
+          )}
+        </dl>
+        {!estPresent(adr.quartier) && !estPresent(org.horaires) && !estPresent(contacts.telephones) && (
+          <p class="mt-2 text-sm text-encre/80">Retrouvez le détail des coordonnées sur la page <a class="hover:underline" href="/contact/">Contact</a>.</p>
+        )}
+      </aside>
+    </div>
+  </section>
+
+  {
+    chiffres.length > 0 && (
+      <section class="border-b border-filet bg-white">
+        <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-8 text-center sm:grid-cols-3">
+          {chiffres.map((c) => (
+            <div>
+              <p class="font-serif text-3xl font-bold text-vert">{c.valeur}</p>
+              <p class="mt-1 text-sm uppercase tracking-wide text-gris">{c.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    filieres.length > 0 && (
+      <section class="section-titre mx-auto max-w-6xl px-4 py-10">
+        <div class="flex items-baseline justify-between gap-4">
+          <h2>Filières de formation</h2>
+          <a class="text-sm font-semibold no-underline hover:underline" href="/formations/">Toutes les filières</a>
+        </div>
+        <ul class="mt-4 flex flex-wrap gap-2">
+          {filieres.map((f) => (
+            <li>
+              <a href={`/formations/${f.data.slug ?? f.id}/`} class="flex items-center gap-2 rounded border border-filet border-l-2 border-l-transparent bg-white px-3 py-2 text-sm font-medium text-vert-nuit no-underline hover:border-vert hover:border-l-vert">
+                {estPresent(f.data.icone) && <IconFiliere nom={String(f.data.icone)} classe="h-5 w-5 text-vert" />}
+                {f.data.titre}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  <section class="section-titre border-t border-filet bg-fond">
+    <div class="mx-auto max-w-6xl px-4 py-10">
+      <h2>S'inscrire en trois étapes</h2>
+      <ol class="mt-5 grid gap-6 sm:grid-cols-3">
+        <li>
+          <span class="grid h-8 w-8 place-items-center rounded-full bg-vert font-serif text-sm font-bold text-white" aria-hidden="true">1</span>
+          <h3 class="mt-2 font-serif text-base font-semibold text-vert-nuit">Choisir une filière</h3>
+          <p class="mt-1 text-sm text-encre/80"><a class="font-semibold no-underline hover:underline" href="/formations/">Comparer les métiers proposés</a> et retenir celui qui vous convient.</p>
+        </li>
+        <li>
+          <span class="grid h-8 w-8 place-items-center rounded-full bg-vert font-serif text-sm font-bold text-white" aria-hidden="true">2</span>
+          <h3 class="mt-2 font-serif text-base font-semibold text-vert-nuit">Se pré-inscrire</h3>
+          <p class="mt-1 text-sm text-encre/80"><a class="font-semibold no-underline hover:underline" href="/admission/">Remplir la pré-inscription en ligne</a> pour préparer le dépôt du dossier.</p>
+        </li>
+        <li>
+          <span class="grid h-8 w-8 place-items-center rounded-full bg-vert font-serif text-sm font-bold text-white" aria-hidden="true">3</span>
+          <h3 class="mt-2 font-serif text-base font-semibold text-vert-nuit">Déposer le dossier</h3>
+          <p class="mt-1 text-sm text-encre/80">Déposer le dossier complet au secrétariat du Centre, <a class="font-semibold no-underline hover:underline" href="/contact/">coordonnées ici</a>.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  {
+    actualites.length > 0 && (
+      <section class="section-titre border-t border-filet bg-white">
+        <div class="mx-auto max-w-6xl px-4 py-10">
+          <div class="flex items-baseline justify-between gap-4">
+            <h2>Actualités</h2>
+            <a class="text-sm font-semibold no-underline hover:underline" href="/actualites/">Toutes les actualités</a>
+          </div>
+          <ul class="mt-4 divide-y divide-filet">
+            {actualites.map((a) => (
+              <li class="py-4">
+                <a href={`/actualites/${a.id}/`} class="group block no-underline">
+                  <time class="text-sm text-gris">{formatDate(a.data.date)}</time>
+                  <h3 class="mt-0.5 text-lg font-serif text-vert-nuit group-hover:underline">{a.data.titre}</h3>
+                  {estPresent(a.data.resume) && <p class="mt-1 text-encre/80">{a.data.resume}</p>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>

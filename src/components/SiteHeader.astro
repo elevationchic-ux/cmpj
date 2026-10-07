@@ -1,0 +1,159 @@
+---
+// En-tete : bandeau Republique/Ministere, identite du Centre, navigation principale.
+import { getNavigation, estPresent } from '../lib/contenu';
+
+const { org } = Astro.props;
+const nav = await getNavigation();
+const liens = (nav.liens ?? []).slice().sort((a, b) => (a.ordre ?? 99) - (b.ordre ?? 99));
+const decouvrir = liens.filter((l) => (l.groupe ?? 'decouvrir') === 'decouvrir');
+const agir = liens.filter((l) => l.groupe === 'agir');
+
+const republicque = org.tutelle?.republique;
+const ministere = org.tutelle?.ministere;
+const courante = Astro.url.pathname;
+const isActive = (url: string) =>
+  url === '/' ? courante === '/' : courante === url || courante.startsWith(url.replace(/\/$/, ''));
+---
+
+<header class="border-b border-filet bg-white">
+  {/* Bandeau tricolore, marque de l'Etat. */}
+  <div class="h-[3px] bg-[linear-gradient(90deg,var(--color-vert)_0_33.3%,var(--color-brique)_33.3%_66.6%,var(--color-jaune)_66.6%_100%)]" aria-hidden="true"></div>
+
+  {
+    estPresent(republicque) && (
+      <div class="bg-vert text-white">
+        <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-sm">
+          <span class="font-semibold tracking-wide">{republicque}</span>
+          {estPresent(ministere) && (
+            <span class="opacity-90 hidden sm:inline">
+              <span aria-hidden="true">|</span>
+              <span class="ml-3">{ministere}</span>
+            </span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  <div class="mx-auto max-w-6xl px-4">
+    <div class="flex flex-wrap items-center justify-between gap-y-3 py-4">
+      <a href="/" class="flex items-center gap-3 no-underline text-inherit" aria-label="Retour à l'accueil">
+        <span
+          class="grid h-11 w-11 place-items-center rounded bg-vert font-serif text-lg font-bold leading-none text-white"
+          aria-hidden="true">CM</span
+        >
+        <span class="block">
+          <span class="block font-serif text-lg font-bold leading-tight text-vert-nuit">
+            {org.denomination_courte ?? 'CMPJ Régional du Littoral'}
+          </span>
+          {estPresent(org.adresse?.quartier) && (
+            <span class="block text-sm text-gris">
+              {org.adresse.quartier}, {org.adresse.ville}
+            </span>
+          )}
+        </span>
+      </a>
+
+      <div class="flex items-center gap-2">
+        <a href="/admission/" class="rounded bg-brique px-4 py-2 text-sm font-semibold text-white no-underline hover:bg-vert-nuit">Candidater</a>
+        <button
+          id="menu-btn"
+          type="button"
+          class="inline-flex items-center gap-2 rounded border border-filet px-3 py-2 text-sm font-semibold text-vert lg:hidden"
+          aria-controls="menu-principal"
+          aria-expanded="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+          Menu
+        </button>
+      </div>
+
+      <nav id="menu-principal" class="hidden w-full lg:block lg:w-auto" aria-label="Navigation principale">
+        {/* Mobile : deux groupes, decouvrir puis agir. */}
+        <div class="flex flex-col gap-1 border-t border-filet py-2 lg:hidden">
+          <p class="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-gris">Découvrir</p>
+          <ul class="flex flex-col gap-1">
+            {
+              decouvrir.map((lien) => (
+                <li>
+                  <a
+                    href={lien.url}
+                    aria-current={isActive(lien.url) ? 'page' : undefined}
+                    class:list={[
+                      'block rounded px-3 py-2 text-[0.98rem] font-medium no-underline transition-colors',
+                      isActive(lien.url)
+                        ? 'bg-vert-clair text-vert-nuit'
+                        : 'text-encre hover:bg-vert-clair hover:text-vert-nuit',
+                    ]}>
+                    {lien.titre}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+          {agir.length > 0 && (
+            <>
+              <p class="px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-wider text-gris">Agir</p>
+              <ul class="flex flex-col gap-1">
+                {agir.map((lien) => (
+                  <li>
+                    <a
+                      href={lien.url}
+                      aria-current={isActive(lien.url) ? 'page' : undefined}
+                      class:list={[
+                        'block rounded px-3 py-2 text-[0.98rem] font-medium no-underline transition-colors',
+                        isActive(lien.url)
+                          ? 'bg-vert-clair text-vert-nuit'
+                          : 'text-encre hover:bg-vert-clair hover:text-vert-nuit',
+                      ]}>
+                      {lien.titre}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+        {/* Desktop : une ligne. */}
+        <ul class="hidden flex-row gap-1 lg:flex">
+          {
+            liens.map((lien) => (
+              <li>
+                <a
+                  href={lien.url}
+                  aria-current={isActive(lien.url) ? 'page' : undefined}
+                  class:list={[
+                    'block rounded px-3 py-2 text-[0.98rem] font-medium no-underline transition-colors',
+                    isActive(lien.url)
+                      ? 'bg-vert-clair text-vert-nuit'
+                      : 'text-encre hover:bg-vert-clair hover:text-vert-nuit',
+                  ]}>
+                  {lien.titre}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById('menu-btn');
+  const menu = document.getElementById('menu-principal');
+  if (btn && menu) {
+    btn.addEventListener('click', () => {
+      const open = menu.classList.toggle('hidden') === false;
+      btn.setAttribute('aria-expanded', String(open));
+    });
+    // Ferme le menu au clic sur un lien, utile sur mobile.
+    menu.querySelectorAll('a').forEach((a) =>
+      a.addEventListener('click', () => {
+        menu.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+      })
+    );
+  }
+</script>

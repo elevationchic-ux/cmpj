@@ -1,0 +1,124 @@
+---
+// Gabarit de base : en-tete institutionnel, navigation, pied de page, metadonnees.
+import '../styles/global.css';
+
+// Les faces sont declarees dans global.css (font-display: optional).
+// Les deux polices vues au premier rendu sont prechargees pour la visite suivante.
+import policeSans400 from '@fontsource/source-sans-3/files/source-sans-3-latin-400-normal.woff2';
+import policeSerif600 from '@fontsource/source-serif-4/files/source-serif-4-latin-600-normal.woff2';
+
+import { getOrganisation, getSite, estPresent } from '../lib/contenu';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import WhatsAppButton from '../components/WhatsAppButton.astro';
+import BarreActionMobile from '../components/BarreActionMobile.astro';
+
+interface Props {
+  title: string;
+  description?: string | null;
+  noindex?: boolean;
+  ogType?: string;
+}
+
+const props = Astro.props;
+const org = await getOrganisation();
+const site = await getSite();
+
+const pageUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+const canonical = pageUrl.href;
+const title = props.title;
+const description = estPresent(props.description)
+  ? props.description
+  : site.description_site ?? '';
+const ogImage = new URL('/og.png', Astro.site ?? Astro.url).href;
+const denomination = org.denomination_officielle ?? 'CMPJ Regional du Littoral';
+
+// Donnees structurées : uniquement les informations reelles fournies par le Centre.
+// sansVides retire les champs non renseignes avant la mise en serie JSON.
+function sansVides<T extends Record<string, any>>(objet: T): T {
+  for (const cle of Object.keys(objet)) {
+    if (objet[cle] === undefined) delete objet[cle];
+  }
+  return objet;
+}
+
+const adr = org.adresse ?? {};
+const postal = sansVides({
+  '@type': 'PostalAddress',
+  streetAddress: estPresent(adr.rue) ? adr.rue : undefined,
+  addressLocality: estPresent(adr.ville) ? adr.ville : undefined,
+  addressRegion: estPresent(adr.region) ? adr.region : undefined,
+  addressCountry: estPresent(adr.pays) ? adr.pays : undefined,
+});
+
+const contacts = org.contacts ?? {};
+const meme = sansVides({
+  '@context': 'https://schema.org',
+  '@type': 'GovernmentOrganization',
+  name: denomination,
+  alternateName: estPresent(org.denomination_courte) ? org.denomination_courte : undefined,
+  url: Astro.site,
+  description,
+  address: Object.keys(postal).length > 1 ? postal : undefined,
+  email: estPresent(contacts.email) ? contacts.email : undefined,
+  telephone: estPresent(contacts.telephones) ? contacts.telephones?.[0] : undefined,
+  sameAs: [org.reseaux?.facebook, org.reseaux?.tiktok].filter(Boolean),
+  parentOrganization: estPresent(org.tutelle?.ministere)
+    ? { '@type': 'GovernmentOrganization', name: org.tutelle?.ministere }
+    : undefined,
+});
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" href={policeSans400} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={policeSerif600} as="font" type="font/woff2" crossorigin />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    {props.noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0F5B3A" />
+
+    <meta property="og:type" content={props.ogType ?? 'website'} />
+    <meta property="og:site_name" content="CMPJ Régional du Littoral" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="fr_FR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    {description && <meta name="twitter:description" content={description} />}
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(meme)} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+  </head>
+  <body>
+    <span id="haut" aria-hidden="true"></span>
+    <a
+      href="#contenu"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:text-vert"
+      >Aller au contenu</a
+    >
+
+    <SiteHeader org={org} site={site} />
+
+    <main id="contenu">
+      <slot />
+    </main>
+
+    <SiteFooter org={org} />
+
+    <BarreActionMobile />
+    <WhatsAppButton org={org} />
+  </body>
+</html>

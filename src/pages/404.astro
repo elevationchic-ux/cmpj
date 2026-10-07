@@ -1,0 +1,22 @@
+---
+// Page 404. Redigee dans le ton du site, sans contenu provisoire.
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const titre = 'Page introuvable | CMPJ Régional du Littoral';
+---
+
+<BaseLayout title={titre} description="La page demandée est introuvable." noindex>
+  <div class="mx-auto max-w-3xl px-4 py-16">
+    <p class="font-serif text-5xl font-bold text-vert-nuit">404</p>
+    <h1 class="mt-3 text-vert-nuit">Page introuvable</h1>
+    <p class="mt-3 text-lg text-encre/85">
+      L'adresse demandée ne correspond à aucune page du site du CMPJ Régional du Littoral.
+      La page a peut-être été déplacée ou son adresse comporte une erreur.
+    </p>
+    <div class="mt-6 flex flex-wrap gap-2">
+      <a href="/" class="rounded bg-vert px-4 py-2.5 font-semibold text-white no-underline hover:bg-vert-nuit">Retour à l'accueil</a>
+      <a href="/plan-du-site/" class="rounded border border-filet px-4 py-2.5 font-semibold text-encre no-underline hover:bg-vert-clair">Consulter le plan du site</a>
+      <a href="/contact/" class="rounded border border-filet px-4 py-2.5 font-semibold text-encre no-underline hover:bg-vert-clair">Contacter le Centre</a>
+    </div>
+  </div>
+</BaseLayout>
