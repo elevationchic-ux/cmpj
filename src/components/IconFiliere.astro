@@ -62,4 +62,15 @@ const { nom, classe = 'h-8 w-8' } = Astro.props;
       </>
     )
   }
+  {
+    nom === 'maconnerie' && (
+      <>
+        <rect x="3" y="12" width="8" height="3.6" rx="0.6" />
+        <rect x="13" y="12" width="8" height="3.6" rx="0.6" />
+        <rect x="8" y="16.5" width="8" height="3.6" rx="0.6" />
+        <path d="M14 4.5l4 4-7 3-1-1z" />
+        <path d="M6 10.5l3-3" />
+      </>
+    )
+  }
 </svg>

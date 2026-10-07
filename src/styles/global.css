@@ -151,6 +151,15 @@
     padding-bottom: 0.35rem;
     border-bottom: 1px solid var(--color-filet);
   }
+  .prose h2::before {
+    content: "";
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-right: 0.5rem;
+    vertical-align: 0.3rem;
+    background: var(--color-jaune);
+  }
   .prose h3 {
     margin-top: 1.5rem;
   }
@@ -162,12 +171,17 @@
   .prose li {
     margin-bottom: 0.35rem;
   }
+  .prose ul > li::marker {
+    color: var(--color-vert);
+  }
   .prose blockquote {
     margin: 1.25rem 0;
-    padding-left: 1rem;
-    border-left: 3px solid var(--color-jaune);
-    color: #3a4441;
-    font-style: italic;
+    padding: 0.9rem 1.1rem;
+    border-left: 4px solid var(--color-vert);
+    background: var(--color-vert-clair);
+    border-radius: 0.5rem;
+    color: var(--color-encre);
+    font-style: normal;
   }
   .prose table {
     width: 100%;
@@ -217,4 +231,38 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--color-vert);
+}
+
+/* Liste de metiers (debouches) : remplace les puces classiques par des
+   coches colorées, sur deux colonnes des que la place le permet.
+   Regle hors couche, prioritaire sur les utilitaires de liste. */
+.liste-metiers {
+  display: grid;
+  gap: 0.6rem 1.5rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding-left: 0;
+}
+.liste-metiers li {
+  position: relative;
+  margin: 0;
+  padding-left: 1.9rem;
+}
+.liste-metiers li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.28rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  background: var(--color-brique);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+@media (min-width: 640px) {
+  .liste-metiers {
+    grid-template-columns: 1fr 1fr;
+  }
 }

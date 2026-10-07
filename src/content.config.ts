@@ -107,7 +107,7 @@ const filieres = defineCollection({
     conditions_admission: liste,
     debouches: liste,
     contact: texteLibre,
-    // Pictogramme de la filiere (menuiserie, metal, electricite, textile, automobile, graphique).
+    // Pictogramme de la filiere (metal, electricite, textile, automobile, menuiserie, graphique, maconnerie).
     icone: texteLibre,
     photo: texteLibre,
     photo_legende: texteLibre,

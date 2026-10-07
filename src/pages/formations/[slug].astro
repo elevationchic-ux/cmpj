@@ -4,6 +4,7 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import EnTetePage from '../../components/EnTetePage.astro';
 import IconFiliere from '../../components/IconFiliere.astro';
+import IllustrationFiliere from '../../components/IllustrationFiliere.astro';
 import { estPresent, getFilieresPubliees, lienWhatsApp, getOrganisation } from '../../lib/contenu';
 
 export async function getStaticPaths() {
@@ -50,12 +51,18 @@ const fil = [{ titre: 'Accueil', url: '/' }, { titre: 'Formations', url: '/forma
 
   <article class="section-titre mx-auto max-w-3xl px-4 py-10">
     {
-      estPresent(d.photo) && (
-        <figure class="mb-6">
-          <img src={d.photo} alt={d.photo_legende || d.titre} loading="lazy" width="1200" height="800" class="w-full rounded" />
-          {estPresent(d.photo_legende) && <figcaption class="mt-1 text-sm text-gris">{d.photo_legende}</figcaption>}
+      estPresent(d.photo) ? (
+        <figure class="-mt-4 mb-6 overflow-hidden rounded-2xl border border-filet bg-vert-clair shadow-sm">
+          <div class="aspect-[16/7] w-full">
+            <img src={String(d.photo)} alt={estPresent(d.photo_legende) ? String(d.photo_legende) : d.titre} class="h-full w-full object-cover" loading="lazy" width="960" height="420" />
+          </div>
+          {estPresent(d.photo_legende) && <figcaption class="bg-vert-nuit px-4 py-2 text-sm text-white">{String(d.photo_legende)}</figcaption>}
         </figure>
-      )
+      ) : estPresent(d.icone) ? (
+        <div class="-mt-4 mb-6 overflow-hidden rounded-2xl border border-filet bg-vert-clair shadow-sm">
+          <IllustrationFiliere nom={String(d.icone)} classe="h-44 w-full sm:h-56" />
+        </div>
+      ) : null
     }
 
     {
@@ -71,17 +78,14 @@ const fil = [{ titre: 'Accueil', url: '/' }, { titre: 'Formations', url: '/forma
 
     {
       infos.length > 0 && (
-        <table class="mt-8 w-full border-collapse text-left text-[0.98rem]">
-          <caption class="sr-only">Caractéristiques de la filière</caption>
-          <tbody>
-            {infos.map((i) => (
-              <tr>
-                <th scope="row" class="border border-filet bg-vert-clair px-3 py-2 font-semibold">{i.titre}</th>
-                <td class="border border-filet px-3 py-2">{String(i.valeur)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <dl class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {infos.map((i) => (
+            <div class="rounded-xl border border-filet bg-fond px-4 py-3">
+              <dt class="text-xs font-semibold uppercase tracking-wide text-gris">{i.titre}</dt>
+              <dd class="mt-0.5 font-serif text-base font-semibold text-vert-nuit">{String(i.valeur)}</dd>
+            </div>
+          ))}
+        </dl>
       )
     }
 
@@ -98,9 +102,9 @@ const fil = [{ titre: 'Accueil', url: '/' }, { titre: 'Formations', url: '/forma
 
     {
       estPresent(d.debouches) && (
-        <section class="mt-6">
+        <section class="mt-8 rounded-2xl border border-filet bg-fond p-5">
           <h2>Débouchés</h2>
-          <ul class="list-disc pl-5">
+          <ul class="liste-metiers">
             {d.debouches!.map((c) => <li>{c}</li>)}
           </ul>
         </section>

@@ -34,7 +34,7 @@ Fichiers concernés : `contenu/pages/le-centre.md`, `contenu/organisation.json`.
 
 ## 4. Filières de formation
 
-La liste actuelle (chaudronnerie, électricité, industrie d'habillement, mécanique automobile, menuiserie, infographie) est reprise de la page Facebook du Centre. Merci de la confirmer et de la compléter.
+La liste actuelle (chaudronnerie, électricité, industrie d'habillement, mécanique automobile, menuiserie, infographie, maçonnerie) est reprise de la page Facebook du Centre. Merci de la confirmer et de la compléter.
 
 Les descriptions générales de chaque métier, le contenu du programme et les débouchés professionnels sont déjà rédigés dans les fichiers de filière. Merci de les valider ou de signaler les ajustements à y apporter (intitulés locaux, spécificités de l'enseignement au CMPJ, filières supprimées ou ajoutées).
 
@@ -51,6 +51,18 @@ Pour chaque filière, fournir les informations propres au Centre, encore non ren
 - Photographie réelle de l'atelier, avec légende et autorisation de diffusion.
 
 Fichiers concernés : un fichier par filière dans `contenu/filieres/`.
+
+### Visuels de filière (illustration et photo)
+
+Chaque filière affiche actuellement une illustration vectorielle (SVG) à son effigie, dans la carte de la page d'accueil, dans la liste des formations et en bandeau de la fiche métier. Cette illustration sert d'emplacement visuel réservé : elle disparaît automatiquement dès qu'une photographie réelle est renseignée.
+
+Pour publier une photo réelle d'un atelier :
+
+1. Déposez l'image dans `public/filieres/` (par exemple `public/filieres/maconnerie.jpg`). Format conseillé : JPEG ou WebP, environ 1200 px de large, compressée (moins de 200 Ko).
+2. Dans l'en-tête (frontmatter) du fichier de filière, ajoutez deux champs :
+   - `photo: /filieres/maconnerie.jpg`
+   - `photo_legende: "Atelier de maçonnerie du CMPJ Régional du Littoral"`
+3. La photo remplace alors l'illustration, avec sa légende, sur la carte et sur la fiche. Sans ces champs, l'illustration reste affichée : aucun cadre vide ni mention « à venir » n'apparaît au public.
 
 ## 5. Admission et inscription
 
