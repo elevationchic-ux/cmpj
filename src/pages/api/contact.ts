@@ -1,4 +1,4 @@
-// Endpoint de contact. Tourne en Pages Function (prerender = false) sur Cloudflare.
+// Endpoint de contact. Tourne en fonction serverless (prerender = false) sur Vercel.
 import type { APIRoute } from 'astro';
 import { validerContact, controleAntiSpam, assainir } from '../../lib/validation';
 import { pageAccuse, transmettre } from '../../lib/formulaires';
@@ -10,7 +10,7 @@ function veutDuJson(request: Request): boolean {
   return accept.includes('application/json') || request.headers.get('x-requested-with') === 'fetch';
 }
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   const form = await request.formData();
 
   if (!controleAntiSpam(form)) {
@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const { erreurs, donnees } = validerContact(form);
-  const env = (locals as any).runtime?.env ?? {};
+  const webhook = process.env.FORMS_WEBHOOK_URL;
 
   if (Object.keys(erreurs).length > 0) {
     if (veutDuJson(request)) {
@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 
-  await transmettre(env.FORMS_WEBHOOK_URL, {
+  await transmettre(webhook, {
     type: 'contact',
     nom: assainir(donnees.nom),
     email: assainir(donnees.email),

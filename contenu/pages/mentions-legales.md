@@ -12,7 +12,7 @@ Le présent site est publié par le Centre Multifonctionnel de Promotion des Jeu
 
 ## Hébergement
 
-Le site est hébergé sur la plateforme Cloudflare Pages, éditée par la société Cloudflare. Les conditions d'hébergement et les coordonnées de l'hébergeur sont celles prévues par la plateforme.
+Le site est hébergé sur la plateforme Vercel, éditée par la société Vercel Inc. Les conditions d'hébergement et les coordonnées de l'hébergeur sont celles prévues par la plateforme.
 
 ## Conditions d'utilisation
 

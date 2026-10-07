@@ -1,6 +1,6 @@
 // Configuration du site officiel du CMPJ Regional du Littoral.
 import { defineConfig } from 'astro/config';
-import cloudflare from '@astrojs/cloudflare';
+import vercel from '@astrojs/vercel';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -11,7 +11,7 @@ const SITE = process.env.PUBLIC_SITE_URL || 'https://cmpj-littoral.cm';
 export default defineConfig({
   site: SITE,
   output: 'static',
-  adapter: cloudflare({
+  adapter: vercel({
     imageService: 'passthrough',
   }),
   integrations: [sitemap()],

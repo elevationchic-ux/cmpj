@@ -1,4 +1,4 @@
-# En-tetes de securite pour Cloudflare Pages.
+# En-tetes de securite. Appliques par Vercel via ce fichier dans le dossier public.
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff

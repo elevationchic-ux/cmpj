@@ -15,7 +15,7 @@ La liste des informations restant à transmettre par le Centre figure dans `CONT
 - Générateur de site statique : Astro 5, rendu statique.
 - Feuille de style : Tailwind CSS 4, configurée dans `src/styles/global.css`.
 - Polices : Source Serif 4 (titres) et Source Sans 3 (texte), auto-hébergées au format WOFF2, subset latin. Aucune police n'est chargée depuis un service externe.
-- Hébergement et fonctions : Cloudflare Pages. Les pages sont servies en statique ; seuls les deux formulaires s'exécutent comme fonctions.
+- Hébergement et fonctions : Vercel. Les pages sont servies en statique ; seuls les deux formulaires s'exécutent comme fonctions serverless.
 - Aucun service tiers de formulaire, aucun traceur, aucune analyse à des fins publicitaires.
 
 ## Prérequis
@@ -29,7 +29,7 @@ La liste des informations restant à transmettre par le Centre figure dans `CONT
 npm install
 ```
 
-Les scripts d'installation des dépendances natives (esbuild, sharp, workerd) doivent être autorisés. Si npm les bloque, exécuter :
+Les scripts d'installation des dépendances natives (esbuild, sharp) doivent être autorisés. Si npm les bloque, exécuter :
 
 ```bash
 npm approve-scripts --all
@@ -44,7 +44,7 @@ npm approve-scripts --all
 | `npm run build` | Build de production dans `dist/`. |
 | `npm run preview` | Prévisualisation du build de production. |
 
-Le résultat de `npm run build` contient les pages statiques ainsi que le dossier `_worker.js` et le fichier `_routes.json` nécessaires aux fonctions Cloudflare.
+Le résultat de `npm run build` contient les pages statiques et les fonctions serverless dans le dossier `.vercel/output`, prêt pour le déploiement Vercel.
 
 ## Structure du projet
 
@@ -178,30 +178,30 @@ FORMS_WEBHOOK_URL=
 
 Cette variable alimente les URL canoniques, le sitemap et les métadonnées Open Graph. Le fichier `.env` n'est pas versionné.
 
-### Faire-pointer le domaine .cm
+### Faire pointer le domaine .cm
 
-1. Créer le projet Pages et déployer (voir ci-dessous).
-2. Dans le tableau de bord Cloudflare Pages, ajouter le domaine dans « Custom domains ».
-3. Chez le registraire .cm, créer un enregistrement `CNAME` vers l'URL `nom-du-projet.pages.dev`, ou indiquer les serveurs Cloudflare si le domaine est géré par Cloudflare.
-4. Laisser Cloudflare émettre le certificat HTTPS. Ne pas activer le site avant que le certificat soit valide.
+1. Créer le projet Vercel et déployer (voir ci-dessous).
+2. Dans le tableau de bord Vercel, ouvrir « Settings » puis « Domains » et ajouter le domaine .cm.
+3. Chez le registraire .cm, créer l'enregistrement demandé par Vercel (un `CNAME` vers `cname.vercel-dns.com` pour un sous-domaine, ou un enregistrement `A`/`ALIAS` pour le domaine racine).
+4. Laisser Vercel émettre le certificat HTTPS. Ne pas activer le site avant que le certificat soit valide.
 
-## Déploiement sur Cloudflare Pages
+## Déploiement sur Vercel
 
-Depuis le tableau de bord Cloudflare :
+Depuis le tableau de bord Vercel :
 
 1. Connecter le dépôt Git du projet.
-2. Framework preset : Astro.
-3. Commande de build : `npm run build`. Dossier de sortie : `dist`.
-4. Variable d'environnement de build : `PUBLIC_SITE_URL`.
-5. Redéployer à chaque modification de contenu.
+2. Framework preset : Astro. Commande de build : `npm run build`.
+3. Variables d'environnement : `PUBLIC_SITE_URL` (domaine canonique) et `FORMS_WEBHOOK_URL` (réceptacle des formulaires, laisser vide en attendant).
 
 En local avec l'interface en ligne de commande :
 
 ```bash
-npx wrangler pages deploy dist
+npm i -g vercel
+vercel          # liaison au projet au premier lancement
+vercel --prod   # déploiement en production
 ```
 
-Les en-têtes de sécurité et le cache sont définis dans `public/_headers`. Le fichier `public/robots.txt` déclare l'emplacement du sitemap.
+Le build produit `.vercel/output` (statique + fonctions serverless pour les deux formulaires). Les en-têtes de sécurité et le cache sont définis dans `public/_headers`. Le fichier `public/robots.txt` déclare l'emplacement du sitemap.
 
 ## Ajout d'une seconde langue
 
