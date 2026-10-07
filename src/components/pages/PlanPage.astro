@@ -1,0 +1,58 @@
+---
+// Plan du site : liste complete des pages, filieres et actualites publiees.
+// Composant partage FR/EN : lit la langue sur l'URL, ne retient que le contenu de cette langue.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../EnTetePage.astro';
+import { getNavigation, getFilieresPubliees, getActualitesPubliees, slugActualite } from '../../lib/contenu';
+import { getLang, localizeUrl, t, type Lang } from '../../lib/i18n';
+
+const lang: Lang = getLang(Astro.url.pathname);
+const nav = await getNavigation(lang);
+const filieres = await getFilieresPubliees(lang);
+const actualites = await getActualitesPubliees(lang);
+const pagesSpeciales = [
+  { titre: t(lang, 'sitemap.legal'), url: '/mentions-legales/' },
+  { titre: t(lang, 'sitemap.privacy'), url: '/confidentialite/' },
+];
+const liensNav = (nav.liens ?? []).slice().sort((a, b) => (a.ordre ?? 99) - (b.ordre ?? 99));
+
+const titre = `${t(lang, 'sitemap.heading')}${t(lang, 'brand.suffix')}`;
+const description = t(lang, 'sitemap.desc');
+const fil = [{ titre: t(lang, 'news.home'), url: '/' }, { titre: t(lang, 'sitemap.heading') }];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre={t(lang, 'sitemap.heading')} chapeau={description} fil={fil} />
+
+  <div class="section-titre mx-auto max-w-4xl space-y-8 px-4 py-10">
+    <section>
+      <h2>{t(lang, 'sitemap.sections')}</h2>
+      <ul class="mt-2 grid gap-1 sm:grid-cols-2">
+        {liensNav.map((l) => <li><a class="no-underline hover:underline" href={localizeUrl(l.url, lang)}>{l.titre}</a></li>)}
+        {pagesSpeciales.map((l) => <li><a class="no-underline hover:underline" href={localizeUrl(l.url, lang)}>{l.titre}</a></li>)}
+      </ul>
+    </section>
+
+    {
+      filieres.length > 0 && (
+        <section>
+          <h2>{t(lang, 'sitemap.trades')}</h2>
+          <ul class="mt-2 grid gap-1 sm:grid-cols-2">
+            {filieres.map((f) => <li><a class="no-underline hover:underline" href={localizeUrl(`/formations/${f.data.slug ?? f.id}/`, lang)}>{f.data.titre}</a></li>)}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      actualites.length > 0 && (
+        <section>
+          <h2 class="text-vert-nuit">{t(lang, 'sitemap.news')}</h2>
+          <ul class="mt-2 grid gap-1 sm:grid-cols-2">
+            {actualites.map((a) => <li><a class="no-underline hover:underline" href={localizeUrl(`/actualites/${slugActualite(a.id)}/`, lang)}>{a.data.titre}</a></li>)}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>

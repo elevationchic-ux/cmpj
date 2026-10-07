@@ -8,6 +8,7 @@ import policeSans400 from '@fontsource/source-sans-3/files/source-sans-3-latin-4
 import policeSerif600 from '@fontsource/source-serif-4/files/source-serif-4-latin-600-normal.woff2';
 
 import { getOrganisation, getSite, estPresent } from '../lib/contenu';
+import { getLang, localizeUrl, t, LOCALES, type Lang } from '../lib/i18n';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import WhatsAppButton from '../components/WhatsAppButton.astro';
@@ -21,11 +22,20 @@ interface Props {
 }
 
 const props = Astro.props;
-const org = await getOrganisation();
-const site = await getSite();
+// La langue est derivée de l'URL : /en/... = anglais, le reste = francais.
+const lang: Lang = getLang(Astro.url.pathname);
+const ogLocale = lang === 'en' ? 'en_US' : 'fr_FR';
+
+const org = await getOrganisation(lang);
+const site = await getSite(lang);
 
 const pageUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 const canonical = pageUrl.href;
+// Alternates hreflang : la page miroir dans chaque langue, plus x-default sur la version francaise.
+const alternates = LOCALES.map((code) => {
+  const u = new URL(localizeUrl(Astro.url.pathname, code), Astro.site ?? Astro.url);
+  return { hreflang: code, href: u.href };
+});
 const title = props.title;
 const description = estPresent(props.description)
   ? props.description
@@ -70,7 +80,7 @@ const meme = sansVides({
 ---
 
 <!doctype html>
-<html lang="fr">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -79,6 +89,10 @@ const meme = sansVides({
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
+    {
+      alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)
+    }
+    <link rel="alternate" hreflang="x-default" href={new URL(localizeUrl(Astro.url.pathname, 'fr'), Astro.site ?? Astro.url).href} />
     {props.noindex && <meta name="robots" content="noindex, nofollow" />}
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -88,12 +102,12 @@ const meme = sansVides({
     <meta name="theme-color" content="#0F5B3A" />
 
     <meta property="og:type" content={props.ogType ?? 'website'} />
-    <meta property="og:site_name" content="CMPJ Régional du Littoral" />
+    <meta property="og:site_name" content={org.denomination_courte ?? 'CMPJ Régional du Littoral'} />
     <meta property="og:title" content={title} />
     {description && <meta property="og:description" content={description} />}
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale" content={ogLocale} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     {description && <meta name="twitter:description" content={description} />}
@@ -107,7 +121,7 @@ const meme = sansVides({
     <a
       href="#contenu"
       class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:text-vert"
-      >Aller au contenu</a
+      >{t(lang, 'a11y.skip')}</a
     >
 
     <SiteHeader org={org} site={site} />
@@ -120,5 +134,13 @@ const meme = sansVides({
 
     <BarreActionMobile />
     <WhatsAppButton org={org} />
+    {lang === 'fr' && !props.noindex && (
+      <script>
+        // Memoire de langue : sur la page d'accueil seulement, si un choix anglais a ete
+        // enregistre lors d'une visite precedente, on propose la version anglaise.
+        const m = document.cookie.match(/(?:^|; )lang=(fr|en)/);
+        if (m && m[1] === 'en' && location.pathname === '/') location.replace('/en/');
+      </script>
+    )}
   </body>
 </html>

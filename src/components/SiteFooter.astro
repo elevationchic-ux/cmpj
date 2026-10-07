@@ -1,10 +1,12 @@
 ---
 // Pied de page : identite complete, coordonnees reelles, liens utiles et reseaux.
 import { getNavigation, estPresent } from '../lib/contenu';
+import { getLang, localizeUrl, t, type Lang } from '../lib/i18n';
 
 const { org } = Astro.props;
-const nav = await getNavigation();
-const pied = nav.liens_pied ?? [];
+const lang: Lang = getLang(Astro.url.pathname);
+const nav = await getNavigation(lang);
+const pied = (nav.liens_pied ?? []).map((l) => ({ ...l, url: localizeUrl(l.url, lang) }));
 
 const adr = org.adresse ?? {};
 const contacts = org.contacts ?? {};
@@ -25,7 +27,7 @@ const ligneAdresse = [adr.rue, adr.repere, adr.quartier, adr.ville, adr.region, 
     </div>
 
     <div>
-      <h2 class="mb-2 font-serif text-base font-semibold text-white">Nous situer et joindre</h2>
+      <h2 class="mb-2 font-serif text-base font-semibold text-white">{t(lang, 'footer.find')}</h2>
       {estPresent(ligneAdresse) && <p class="text-sm text-white/80">{ligneAdresse}</p>}
       {estPresent(org.horaires) && <p class="mt-1 text-sm text-white/80">{org.horaires}</p>}
       {
@@ -46,23 +48,23 @@ const ligneAdresse = [adr.rue, adr.repere, adr.quartier, adr.ville, adr.region, 
       )}
       {
         !estPresent(ligneAdresse) && !estPresent(contacts.telephones) && !estPresent(contacts.email) && (
-          <p class="text-sm text-white/70">Coordonnées du secrétariat communiquées sur la page Contact.</p>
+          <p class="text-sm text-white/70">{t(lang, 'footer.contact_note')}</p>
         )
       }
     </div>
 
     <div>
-      <h2 class="mb-2 font-serif text-base font-semibold text-white">Suivre le Centre</h2>
+      <h2 class="mb-2 font-serif text-base font-semibold text-white">{t(lang, 'footer.follow')}</h2>
       <ul class="space-y-1 text-sm">
         {estPresent(reseaux.facebook) && (
-          <li><a class="text-white/80 no-underline hover:underline" href={reseaux.facebook} rel="noopener noreferrer" target="_blank">Page Facebook</a></li>
+          <li><a class="text-white/80 no-underline hover:underline" href={reseaux.facebook} rel="noopener noreferrer" target="_blank">{t(lang, 'footer.facebook')}</a></li>
         )}
         {estPresent(reseaux.tiktok) && (
-          <li><a class="text-white/80 no-underline hover:underline" href={reseaux.tiktok} rel="noopener noreferrer" target="_blank">Compte TikTok</a></li>
+          <li><a class="text-white/80 no-underline hover:underline" href={reseaux.tiktok} rel="noopener noreferrer" target="_blank">{t(lang, 'footer.tiktok')}</a></li>
         )}
       </ul>
       {pied.length > 0 && (
-        <nav class="mt-4" aria-label="Liens de pied de page">
+        <nav class="mt-4" aria-label={t(lang, 'a11y.footer_links')}>
           <ul class="space-y-1 text-sm">
             {pied.map((lien) => (
               <li><a class="text-white/80 no-underline hover:underline" href={lien.url}>{lien.titre}</a></li>

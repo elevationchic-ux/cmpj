@@ -1,0 +1,155 @@
+---
+// Page d'une filiere. Composant partage FR/EN : recoit l'entree, lit la langue sur l'URL.
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../EnTetePage.astro';
+import IconFiliere from '../IconFiliere.astro';
+import IllustrationFiliere from '../IllustrationFiliere.astro';
+import { estPresent, getFilieresPubliees, lienWhatsApp, getOrganisation } from '../../lib/contenu';
+import { getLang, localizeUrl, t, type Lang } from '../../lib/i18n';
+
+interface Props {
+  f: CollectionEntry<'filieres'>;
+}
+const { f } = Astro.props;
+const lang: Lang = getLang(Astro.url.pathname);
+const d = f.data;
+const { Content } = await render(f);
+
+const toutes = await getFilieresPubliees(lang);
+const index = toutes.findIndex((e) => (e.data.slug ?? e.id) === (d.slug ?? f.id));
+const precedente = index > 0 ? toutes[index - 1] : null;
+const suivante = index >= 0 && index < toutes.length - 1 ? toutes[index + 1] : null;
+
+const org = await getOrganisation(lang);
+const whatsapp = lienWhatsApp(
+  org.contacts?.whatsapp,
+  `${t(lang, 'fiche.whatsapp_msg')}${d.titre}${t(lang, 'fiche.whatsapp_msg_end')}`
+);
+
+const infos = [
+  { titre: t(lang, 'meta.duration'), valeur: d.duree },
+  { titre: t(lang, 'meta.level'), valeur: d.niveau_acces },
+  { titre: t(lang, 'meta.fees'), valeur: d.frais },
+  { titre: t(lang, 'meta.capacity'), valeur: d.capacite },
+  { titre: t(lang, 'meta.award'), valeur: d.diplome },
+].filter((i) => estPresent(i.valeur));
+
+const titre = `${d.titre}${t(lang, 'brand.suffix')}`;
+const description = estPresent(d.resume)
+  ? d.resume
+  : lang === 'en'
+    ? `The ${d.titre} trade at the CMPJ Regional Centre of the Littoral, New-Bell, Douala.`
+    : `La filière ${d.titre} au CMPJ Régional du Littoral, New-Bell, Douala.`;
+const fil = [
+  { titre: t(lang, 'fiche.home'), url: '/' },
+  { titre: t(lang, 'fiche.formations'), url: '/formations/' },
+  { titre: d.titre },
+];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre={d.titre} chapeau={description} fil={fil}>
+    {estPresent(d.icone) && (
+      <span slot="icone" class="grid h-12 w-12 shrink-0 place-items-center rounded bg-vert-clair text-vert">
+        <IconFiliere nom={String(d.icone)} classe="h-7 w-7" />
+      </span>
+    )}
+  </EnTetePage>
+
+  <article class="section-titre mx-auto max-w-3xl px-4 py-10">
+    {
+      estPresent(d.photo) ? (
+        <figure class="-mt-4 mb-6 overflow-hidden rounded-2xl border border-filet bg-vert-clair shadow-sm">
+          <div class="aspect-[16/7] w-full">
+            <img src={String(d.photo)} alt={estPresent(d.photo_legende) ? String(d.photo_legende) : d.titre} class="h-full w-full object-cover" loading="lazy" width="960" height="420" />
+          </div>
+          {estPresent(d.photo_legende) && <figcaption class="bg-vert-nuit px-4 py-2 text-sm text-white">{String(d.photo_legende)}</figcaption>}
+        </figure>
+      ) : estPresent(d.icone) ? (
+        <div class="-mt-4 mb-6 overflow-hidden rounded-2xl border border-filet bg-vert-clair shadow-sm">
+          <IllustrationFiliere nom={String(d.icone)} classe="h-44 w-full sm:h-56" />
+        </div>
+      ) : null
+    }
+
+    {
+      estPresent(d.resume) || estPresent(f.body) ? (
+        <div class="prose max-w-none">
+          {estPresent(d.resume) && <p>{d.resume}</p>}
+          <Content />
+        </div>
+      ) : (
+        <p>{d.titre} {t(lang, 'fiche.fallback')}</p>
+      )
+    }
+
+    {
+      infos.length > 0 && (
+        <dl class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {infos.map((i) => (
+            <div class="rounded-xl border border-filet bg-fond px-4 py-3">
+              <dt class="text-xs font-semibold uppercase tracking-wide text-gris">{i.titre}</dt>
+              <dd class="mt-0.5 font-serif text-base font-semibold text-vert-nuit">{String(i.valeur)}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+
+    {
+      estPresent(d.conditions_admission) && (
+        <section class="mt-8">
+          <h2>{t(lang, 'fiche.requirements')}</h2>
+          <ul class="list-disc pl-5">
+            {d.conditions_admission!.map((c) => <li>{c}</li>)}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      estPresent(d.debouches) && (
+        <section class="mt-8 rounded-2xl border border-filet bg-fond p-5">
+          <h2>{t(lang, 'fiche.outcomes')}</h2>
+          <ul class="liste-metiers">
+            {d.debouches!.map((c) => <li>{c}</li>)}
+          </ul>
+        </section>
+      )
+    }
+
+    <div class="mt-10 flex flex-wrap gap-2 border-t border-filet pt-6">
+      <a href={localizeUrl('/admission/', lang)} class="rounded bg-brique px-4 py-2.5 font-semibold text-white no-underline hover:bg-vert-nuit">{t(lang, 'fiche.apply')}</a>
+      <a href={localizeUrl('/contact/', lang)} class="rounded border border-filet px-4 py-2.5 font-semibold text-encre no-underline hover:bg-vert-clair">{t(lang, 'fiche.contact')}</a>
+    </div>
+    {whatsapp && (
+      <p class="mt-4 text-sm">
+        {t(lang, 'fiche.q_label')}
+        <a class="font-semibold no-underline hover:underline" href={whatsapp} target="_blank" rel="noopener noreferrer">{t(lang, 'fiche.whatsapp_link')}</a>.
+      </p>
+    )}
+    {estPresent(d.contact) && <p class="mt-4 text-sm">{d.contact}</p>}
+
+    {(precedente || suivante) && (
+      <nav aria-label={t(lang, 'fiche.formations')} class="mt-10 grid gap-3 border-t border-filet pt-6 sm:grid-cols-2">
+        {precedente && (
+          <a href={localizeUrl(`/formations/${precedente.data.slug ?? precedente.id}/`, lang)} class="rounded border border-filet bg-white px-4 py-3 no-underline hover:border-vert">
+            <span class="block text-xs uppercase tracking-wide text-gris">{t(lang, 'fiche.prev')}</span>
+            <span class="mt-0.5 block font-semibold text-vert-nuit">{precedente.data.titre}</span>
+          </a>
+        )}
+        {suivante && (
+          <a href={localizeUrl(`/formations/${suivante.data.slug ?? suivante.id}/`, lang)} class="rounded border border-filet bg-white px-4 py-3 text-right no-underline hover:border-vert sm:text-right">
+            <span class="block text-xs uppercase tracking-wide text-gris">{t(lang, 'fiche.next')}</span>
+            <span class="mt-0.5 block font-semibold text-vert-nuit">{suivante.data.titre}</span>
+          </a>
+        )}
+      </nav>
+    )}
+
+    <p class="mt-8 text-center text-sm">
+      <a href="#haut" class="font-semibold no-underline hover:underline">{t(lang, 'fiche.back_top')}</a>
+    </p>
+  </article>
+</BaseLayout>

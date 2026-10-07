@@ -1,0 +1,113 @@
+---
+// Formations : grille de cartes illustrees. Composant partage FR/EN, langue lue sur l'URL.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../EnTetePage.astro';
+import IconFiliere from '../IconFiliere.astro';
+import IllustrationFiliere from '../IllustrationFiliere.astro';
+import { getFilieresPubliees, estPresent } from '../../lib/contenu';
+import { getLang, localizeUrl, t, type Lang } from '../../lib/i18n';
+
+const lang: Lang = getLang(Astro.url.pathname);
+const filieres = await getFilieresPubliees(lang);
+const plier = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+const titre = `${t(lang, 'formations.heading')}${t(lang, 'brand.suffix')}`;
+const description =
+  lang === 'en'
+    ? 'List of the vocational training tracks offered by the CMPJ Regional Centre of the Littoral in Douala.'
+    : 'Liste des filières de formation professionnelles proposées par le CMPJ Régional du Littoral à Douala.';
+const fil = [{ titre: t(lang, 'fiche.home'), url: '/' }, { titre: t(lang, 'formations.heading') }];
+
+const resumeCourt = (r: string | null | undefined): string => {
+  if (!estPresent(r)) return '';
+  const s = String(r);
+  return s.length > 140 ? `${s.slice(0, 140).replace(/\s+\S*$/, '')}…` : s;
+};
+
+// Pastille d'info : affichee seulement si la valeur est confirmee par le Centre.
+const meta = (f: (typeof filieres)[number]) =>
+  [
+    { label: t(lang, 'meta.duration'), valeur: f.data.duree },
+    { label: t(lang, 'meta.level'), valeur: f.data.niveau_acces },
+    { label: t(lang, 'meta.award'), valeur: f.data.diplome },
+  ].filter((m) => estPresent(m.valeur));
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre={t(lang, 'formations.heading')} chapeau={description} fil={fil} />
+
+  <div class="mx-auto max-w-6xl px-4 py-10">
+    {
+      filieres.length === 0 ? (
+        <p>{t(lang, 'formations.empty_list')}</p>
+      ) : (
+        <>
+          <div class="mb-6 max-w-sm">
+            <label for="filtre" class="block text-sm font-semibold">{t(lang, 'formations.search_label')}</label>
+            <input id="filtre" type="search" placeholder={t(lang, 'formations.search_placeholder')}
+              class="mt-1 w-full rounded-lg border border-filet bg-white px-3 py-2 outline-none focus:border-vert" data-filtre />
+          </div>
+
+          <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" data-cartes>
+            {filieres.map((f) => (
+              <li data-item data-nom={plier(f.data.titre)} class="group overflow-hidden rounded-2xl border border-filet bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+                <a href={localizeUrl(`/formations/${f.data.slug ?? f.id}/`, lang)} class="block no-underline">
+                  <div class="relative aspect-[16/10] w-full overflow-hidden border-b border-filet bg-vert-clair">
+                    {estPresent(f.data.photo) ? (
+                      <img src={String(f.data.photo)} alt={estPresent(f.data.photo_legende) ? String(f.data.photo_legende) : f.data.titre} class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]" loading="lazy" width="640" height="400" />
+                    ) : estPresent(f.data.icone) ? (
+                      <IllustrationFiliere nom={String(f.data.icone)} classe="h-full w-full transition duration-300 group-hover:scale-[1.04]" />
+                    ) : (
+                      <div class="grid h-full place-items-center text-vert"><IconFiliere nom="" classe="h-10 w-10" /></div>
+                    )}
+                  </div>
+                  <div class="p-4">
+                    <h2 class="font-serif text-lg font-semibold text-vert-nuit group-hover:underline">{f.data.titre}</h2>
+                    {estPresent(f.data.resume) && <p class="mt-1 text-sm leading-relaxed text-encre/75">{resumeCourt(f.data.resume)}</p>}
+                    {meta(f).length > 0 && (
+                      <ul class="mt-3 flex flex-wrap gap-1.5">
+                        {meta(f).map((m) => (
+                          <li class="rounded-full bg-vert-clair px-2.5 py-0.5 text-xs font-medium text-vert-nuit">
+                            <span class="text-gris">{m.label} :</span> {String(m.valeur)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <span class="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brique">
+                      {t(lang, 'formations.card_cta')}
+                      <svg viewBox="0 0 20 20" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h11M11 5l5 5-5 5" /></svg>
+                    </span>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p class="mt-4 hidden text-sm text-gris" data-vide>{t(lang, 'formations.empty_search')}</p>
+          <p class="mt-6 text-sm text-encre/80">{t(lang, 'formations.footnote')}</p>
+        </>
+      )
+    }
+  </div>
+
+  <script>
+    const plier = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const champ = document.querySelector<HTMLInputElement>('[data-filtre]');
+    const vide = document.querySelector<HTMLElement>('[data-vide]');
+    const cartes = document.querySelector<HTMLElement>('[data-cartes]');
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-item]'));
+    if (champ) {
+      champ.addEventListener('input', () => {
+        const q = plier(champ.value.trim());
+        let visibles = 0;
+        items.forEach((el) => {
+          const nom = el.getAttribute('data-nom') || '';
+          const ok = nom.includes(q);
+          el.style.display = ok ? '' : 'none';
+          if (ok) visibles++;
+        });
+        if (vide) vide.classList.toggle('hidden', visibles !== 0);
+        if (cartes) cartes.style.display = visibles === 0 ? 'none' : '';
+      });
+    }
+  </script>
+</BaseLayout>

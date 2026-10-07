@@ -1,11 +1,11 @@
 ---
-// Pages statutaires editables (Le Centre, Programmes, Mentions, Confidentialite).
-import { getCollection, render } from 'astro:content';
-import BaseLayout from '../layouts/BaseLayout.astro';
-import EnTetePage from '../components/EnTetePage.astro';
+// Pages statutaires editables (francais). getStaticPaths ne retient que les pages francaises,
+// hors admission (route dediee) ; le corps de page vit dans le composant partage.
+import { getCollection } from 'astro:content';
+import PageStatique from '../components/pages/PageStatique.astro';
 
 export async function getStaticPaths() {
-  const pages = await getCollection('pages', (e) => e.data.publie !== false && e.data.slug !== 'admission');
+  const pages = await getCollection('pages', (e) => e.data.publie !== false && e.data.slug !== 'admission' && e.data.lang !== 'en');
   return pages.map((page) => ({
     params: { slug: page.data.slug ?? page.id },
     props: { page },
@@ -13,16 +13,5 @@ export async function getStaticPaths() {
 }
 
 const { page } = Astro.props;
-const { Content } = await render(page);
-const titre = `${page.data.titre} | CMPJ Régional du Littoral`;
-const fil = [{ titre: 'Accueil', url: '/' }, { titre: page.data.titre }];
 ---
-
-<BaseLayout title={titre} description={page.data.description}>
-  <EnTetePage titre={page.data.titre} chapeau={page.data.description} fil={fil} />
-  <article class="mx-auto max-w-3xl px-4 py-10">
-    <div class="prose">
-      <Content />
-    </div>
-  </article>
-</BaseLayout>
+<PageStatique page={page} />

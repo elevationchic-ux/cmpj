@@ -1,11 +1,22 @@
 [
   {
     "id": "general",
+    "lang": "fr",
     "titre_accueil": "CMPJ Régional du Littoral",
     "description_site": "Centre Multifonctionnel de Promotion des Jeunes (CMPJ) Régional du Littoral, New-Bell, Douala. Structures d'encadrement de proximité sous tutelle du Ministère de la Jeunesse et de l'Éducation Civique.",
     "mission": "Le Centre contribue à l'insertion sociale des jeunes et à la promotion économique des jeunes et de leurs groupements.",
     "langue_active": "fr",
-    "langues_disponibles": ["fr"],
+    "langues_disponibles": ["fr", "en"],
+    "chiffres_cles": []
+  },
+  {
+    "id": "general-en",
+    "lang": "en",
+    "titre_accueil": "CMPJ Littoral Region",
+    "description_site": "Multi-purpose Youth Promotion Centre (CMPJ), Littoral Region, New-Bell, Douala. Community support facilities under the supervision of the Ministry of Youth and Civic Education.",
+    "mission": "The Centre contributes to the social integration of young people and to the economic promotion of youth and their groups.",
+    "langue_active": "en",
+    "langues_disponibles": ["fr", "en"],
     "chiffres_cles": []
   }
 ]

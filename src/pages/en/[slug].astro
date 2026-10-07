@@ -1,0 +1,17 @@
+---
+// Pages statutaires editables (anglais). getStaticPaths ne retient que les pages anglaises,
+// hors admission (route dediee) ; le corps de page vit dans le composant partage.
+import { getCollection } from 'astro:content';
+import PageStatique from '../../components/pages/PageStatique.astro';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('pages', (e) => e.data.publie !== false && e.data.slug !== 'admission' && e.data.lang === 'en');
+  return pages.map((page) => ({
+    params: { slug: page.data.slug ?? page.id },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props;
+---
+<PageStatique page={page} />

@@ -3,10 +3,25 @@
 // Regle absolue : un champ absent, vide ou null n'est jamais affiche au public.
 import { defineCollection, z } from 'astro:content';
 import { glob, file } from 'astro/loaders';
+import { extname } from 'node:path';
+
+// Identifiant de collection dependant de la langue. Le chargeur glob utilise par defaut le
+// champ « slug » comme identifiant : avec deux langues publiees, l'entree anglaise ecraserait
+// l'entree francaise (meme slug). On prefixe donc l'identifiant par la langue pour que les
+// deux coexistent. Le champ « slug » reste inchange et sert toujours a construire l'URL.
+function identifiantBilingue({ entry, data }: { entry: string; data: Record<string, any> }): string {
+  const tige = entry.replace(/\/+/g, '/').replace(new RegExp(extname(entry) + '$'), '');
+  const langue = data.lang === 'en' ? 'en' : 'fr';
+  return `${langue}-${tige}`;
+}
 
 // Champ de texte optionnel : accepte une chaine, null ou une absence.
 const texteLibre = z.string().nullish();
 const liste = z.array(z.string()).optional();
+
+// Langue d'une entrée de contenu. Par défaut français ; l'anglais est marqué 'en'.
+// Le site est bilingue : chaque page existe dans ses deux langues.
+const langue = z.enum(['fr', 'en']).default('fr').optional();
 
 // Un champ boolean de controle permet a la direction d'afficher ou masquer une section
 // sans supprimer le texte : true = publie, toute autre valeur = masque.
@@ -15,6 +30,7 @@ const publiable = z.boolean().optional();
 const organisation = defineCollection({
   loader: file('contenu/organisation.json'),
   schema: z.object({
+    lang: langue,
     denomination_courte: texteLibre,
     denomination_officielle: texteLibre,
     categorie: texteLibre,
@@ -59,6 +75,7 @@ const organisation = defineCollection({
 const site = defineCollection({
   loader: file('contenu/site.json'),
   schema: z.object({
+    lang: langue,
     titre_accueil: texteLibre,
     description_site: texteLibre,
     mission: texteLibre,
@@ -75,6 +92,7 @@ const site = defineCollection({
 const navigation = defineCollection({
   loader: file('contenu/navigation.json'),
   schema: z.object({
+    lang: langue,
     liens: z
       .array(
         z.object({
@@ -91,8 +109,9 @@ const navigation = defineCollection({
 
 // Une filiere de formation. Seules les valeurs confirmees par le Centre sont affichees.
 const filieres = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: 'contenu/filieres' }),
+  loader: glob({ pattern: '**/*.{md,mdx}', base: 'contenu/filieres', generateId: identifiantBilingue }),
   schema: z.object({
+    lang: langue,
     titre: z.string(),
     slug: texteLibre,
     ordre: z.number().optional(),
@@ -117,6 +136,7 @@ const filieres = defineCollection({
 const actualites = defineCollection({
   loader: glob({ pattern: '**/*.md', base: 'contenu/actualites' }),
   schema: z.object({
+    lang: langue,
     titre: z.string(),
     date: z.coerce.date(),
     categorie: texteLibre,
@@ -130,6 +150,7 @@ const actualites = defineCollection({
 const evenements = defineCollection({
   loader: glob({ pattern: '**/*.md', base: 'contenu/evenements' }),
   schema: z.object({
+    lang: langue,
     titre: z.string(),
     date: z.coerce.date(),
     lieu: texteLibre,
@@ -140,8 +161,9 @@ const evenements = defineCollection({
 });
 
 const pages = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: 'contenu/pages' }),
+  loader: glob({ pattern: '**/*.md', base: 'contenu/pages', generateId: identifiantBilingue }),
   schema: z.object({
+    lang: langue,
     titre: z.string(),
     description: texteLibre,
     slug: texteLibre,
@@ -153,6 +175,7 @@ const pages = defineCollection({
 const telechargements = defineCollection({
   loader: file('contenu/telechargements.json'),
   schema: z.object({
+    lang: langue,
     titre: z.string(),
     url: z.string(),
     format: texteLibre,
@@ -164,6 +187,7 @@ const telechargements = defineCollection({
 const galerie = defineCollection({
   loader: file('contenu/galerie.json'),
   schema: z.object({
+    lang: langue,
     titre: texteLibre,
     date: texteLibre,
     media: z

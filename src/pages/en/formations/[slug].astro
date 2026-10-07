@@ -1,0 +1,13 @@
+---
+// Fiche metier (anglais). getStaticPaths ne retient que les filieres anglaises.
+import { getCollection } from 'astro:content';
+import Fiche from '../../../components/pages/Fiche.astro';
+
+export async function getStaticPaths() {
+  const filieres = await getCollection('filieres', (e) => e.data.publie === true && e.data.lang === 'en');
+  return filieres.map((f) => ({ params: { slug: f.data.slug ?? f.id }, props: { f } }));
+}
+
+const { f } = Astro.props;
+---
+<Fiche f={f} />

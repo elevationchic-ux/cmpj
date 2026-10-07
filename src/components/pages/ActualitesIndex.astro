@@ -1,0 +1,103 @@
+---
+// Actualités : liste chronologique, recherche et filtre par categorie, plus agenda des evenements.
+// Composant partage FR/EN : lit la langue sur l'URL, ne retient que le contenu de cette langue.
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../EnTetePage.astro';
+import { getActualitesPubliees, estPresent, slugActualite } from '../../lib/contenu';
+import { getLang, localizeUrl, formatDate, t, type Lang } from '../../lib/i18n';
+
+const lang: Lang = getLang(Astro.url.pathname);
+const actualites = await getActualitesPubliees(lang);
+const categories = Array.from(new Set(actualites.map((a) => a.data.categorie).filter((c) => estPresent(c)))) as string[];
+
+const evenements = (await getCollection('evenements', (e) => e.data.publie === true && (e.data.lang === 'en' ? 'en' : 'fr') === lang))
+  .map((e) => ({ e, date: new Date(e.data.date) }))
+  .filter((x) => x.date.getTime() >= Date.now())
+  .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+const titre = `${t(lang, 'news.heading')}${t(lang, 'brand.suffix')}`;
+const description = t(lang, 'news.desc');
+const fil = [{ titre: t(lang, 'news.home'), url: '/' }, { titre: t(lang, 'news.crumb') }];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre={t(lang, 'news.heading')} chapeau={description} fil={fil} />
+
+  <div class="section-titre mx-auto max-w-4xl px-4 py-10">
+    {
+      evenements.length > 0 && (
+        <section class="mb-10">
+          <h2>{t(lang, 'news.upcoming')}</h2>
+          <ul class="mt-3 divide-y divide-filet border-y border-filet">
+            {evenements.map(({ e, date }) => (
+              <li class="flex flex-wrap gap-x-4 gap-y-1 py-3">
+                <time class="font-semibold text-vert">{formatDate(date, lang)}</time>
+                <div>
+                  <p class="font-medium">{e.data.titre}</p>
+                  {estPresent(e.data.lieu) && <p class="text-sm text-gris">{e.data.lieu}{estPresent(e.data.heure) ? `, ${e.data.heure}` : ''}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      actualites.length > 0 ? (
+        <>
+          <div class="mb-6 flex flex-wrap items-end gap-4">
+            <div class="grow max-w-sm">
+              <label for="q" class="block text-sm font-semibold">{t(lang, 'news.search_label')}</label>
+              <input id="q" type="search" placeholder={t(lang, 'news.search_placeholder')} class="mt-1 w-full rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert" data-q />
+            </div>
+            {
+              categories.length > 0 && (
+                <div>
+                  <label for="cat" class="block text-sm font-semibold">{t(lang, 'news.category_label')}</label>
+                  <select id="cat" class="mt-1 rounded border border-filet bg-white px-3 py-2 outline-none focus:border-vert" data-cat>
+                    <option value="">{t(lang, 'news.category_all')}</option>
+                    {categories.map((c) => <option value={c}>{c}</option>)}
+                  </select>
+                </div>
+              )
+            }
+          </div>
+
+          <ul class="divide-y divide-filet border-y border-filet" data-liste>
+            {actualites.map((a) => (
+              <li class="py-5" data-titre={a.data.titre.toLowerCase()} data-cat={(a.data.categorie ?? '').toLowerCase()} data-resume={(a.data.resume ?? '').toLowerCase()}>
+                <a href={localizeUrl(`/actualites/${slugActualite(a.id)}/`, lang)} class="group block no-underline">
+                  <time class="text-sm text-gris">{formatDate(a.data.date, lang)}</time>
+                  {estPresent(a.data.categorie) && <span class="ml-2 text-xs font-semibold uppercase tracking-wide text-vert">{a.data.categorie}</span>}
+                  <h3 class="mt-1 text-lg text-vert-nuit group-hover:underline">{a.data.titre}</h3>
+                  {estPresent(a.data.resume) && <p class="mt-1 text-encre/80">{a.data.resume}</p>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p>{t(lang, 'news.empty')}</p>
+      )
+    }
+  </div>
+
+  <script>
+    const q = document.querySelector<HTMLInputElement>('[data-q]');
+    const cat = document.querySelector<HTMLSelectElement>('[data-cat]');
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-liste] > li'));
+    const appliquer = () => {
+      const texte = (q?.value || '').trim().toLowerCase();
+      const categorie = (cat?.value || '').toLowerCase();
+      items.forEach((li) => {
+        const okTexte = [li.dataset.titre, li.dataset.resume].some((v) => (v || '').includes(texte));
+        const okCat = !categorie || (li.dataset.cat || '') === categorie;
+        li.style.display = okTexte && okCat ? '' : 'none';
+      });
+    };
+    q?.addEventListener('input', appliquer);
+    cat?.addEventListener('change', appliquer);
+  </script>
+</BaseLayout>

@@ -1,0 +1,198 @@
+---
+// Accueil : identite du Centre, mission, acces rapides, coordonnees si confirmees, dernieres actualites.
+// Composant partage entre les routes / (francais) et /en/ (anglais) : la langue est lue sur l'URL.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import IconFiliere from '../IconFiliere.astro';
+import IllustrationFiliere from '../IllustrationFiliere.astro';
+import { getOrganisation, getSite, estPresent, getActualitesPubliees, getFilieresPubliees } from '../../lib/contenu';
+import { getLang, localizeUrl, t, formatDate, nombreEnLettres, type Lang } from '../../lib/i18n';
+
+const lang: Lang = getLang(Astro.url.pathname);
+const org = await getOrganisation(lang);
+const site = await getSite(lang);
+const actualites = (await getActualitesPubliees(lang)).slice(0, 3);
+const filieres = await getFilieresPubliees(lang);
+
+const adr = org.adresse ?? {};
+const contacts = org.contacts ?? {};
+const titre = `${org.denomination_courte ?? 'CMPJ Littoral Region'}, ${adr.ville ?? 'Douala'}`;
+const description = site.description_site;
+
+// Accroche : fait établi, construit a partir des donnees reelles du Centre.
+const lieu = [adr.quartier, adr.ville].filter((p) => estPresent(p)).join(', ');
+const nb = filieres.length;
+const accroche =
+  nb > 0
+    ? `${nombreEnLettres(lang, nb)} ${nb > 1 ? t(lang, 'home.acc_plural') : t(lang, 'home.acc_one')}, ${t(lang, 'home.acc_centre')}${
+        estPresent(lieu) ? `${t(lang, 'home.acc_at')}${lieu}` : ''
+      }.`
+    : null;
+
+const chiffres = (site.chiffres_cles ?? []).filter((c) => estPresent(c?.valeur) && estPresent(c?.label));
+
+// Accroche courte sous chaque carte filiere, tiree du resume.
+const resumeCourt = (r: string | null | undefined): string => {
+  if (!estPresent(r)) return '';
+  const s = String(r);
+  return s.length > 112 ? `${s.slice(0, 112).replace(/\s+\S*$/, '')}…` : s;
+};
+---
+
+<BaseLayout title={titre} description={description}>
+  {accroche && (
+    <section class="bg-vert text-white">
+      <div class="mx-auto max-w-6xl px-4 py-14 lg:py-20">
+        <p class="font-serif text-3xl leading-tight font-semibold text-balance sm:text-4xl lg:text-5xl">
+          {accroche}
+        </p>
+        <div class="mt-5 h-0.5 w-16 bg-jaune" aria-hidden="true"></div>
+      </div>
+    </section>
+  )}
+
+  <section class="border-b border-filet bg-white">
+    <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[1.4fr_1fr] lg:py-16">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-vert">{estPresent(org.categorie) ? org.categorie : t(lang, 'home.centre_default')}</p>
+        <h1 class="mt-2 text-vert-nuit">{org.denomination_officielle}</h1>
+        {estPresent(site.mission) && (
+          <p class="mt-4 max-w-xl text-lg leading-relaxed text-encre/85">{site.mission}</p>
+        )}
+
+        <div class="mt-6 flex flex-wrap gap-2">
+          <a href={localizeUrl('/formations/', lang)} class="rounded bg-brique px-4 py-2.5 font-semibold text-white no-underline hover:bg-vert-nuit">{t(lang, 'home.cta_trades')}</a>
+          <a href={localizeUrl('/admission/', lang)} class="rounded border border-vert px-4 py-2.5 font-semibold text-vert no-underline hover:bg-vert-clair">{t(lang, 'home.cta_apply')}</a>
+          <a href={localizeUrl('/contact/', lang)} class="rounded border border-filet px-4 py-2.5 font-semibold text-encre no-underline hover:bg-vert-clair">{t(lang, 'home.cta_contact')}</a>
+        </div>
+      </div>
+
+      <aside class="rounded border border-filet bg-fond p-5">
+        <h2 class="font-serif text-base font-semibold text-vert-nuit">{t(lang, 'home.practical')}</h2>
+        <dl class="mt-3 space-y-3 text-sm">
+          {estPresent(adr.quartier) && (
+            <div><dt class="font-semibold text-encre">{t(lang, 'home.address')}</dt>
+              <dd class="text-encre/80">{[adr.rue, adr.repere, adr.quartier, adr.ville].filter((p) => estPresent(p)).join(', ')}</dd></div>
+          )}
+          {estPresent(org.horaires) && (
+            <div><dt class="font-semibold text-encre">{t(lang, 'home.hours')}</dt><dd class="text-encre/80">{org.horaires}</dd></div>
+          )}
+          {estPresent(contacts.telephones) && (
+            <div><dt class="font-semibold text-encre">{t(lang, 'home.phone')}</dt>
+              <dd class="text-encre/80">
+                {contacts.telephones?.map((tel: string, i: number) => (
+                  <>{i > 0 && <span>, </span>}<a class="no-underline hover:underline" href={`tel:${tel.replace(/[^+0-9]/g, '')}`}>{tel}</a></>
+                ))}
+              </dd></div>
+          )}
+          {estPresent(org.tutelle?.ministere) && (
+            <div><dt class="font-semibold text-encre">{t(lang, 'home.tutelle')}</dt>
+              <dd class="text-encre/80">{org.tutelle?.ministere}{estPresent(org.tutelle?.sigle) ? ` (${org.tutelle?.sigle})` : ''}</dd></div>
+          )}
+        </dl>
+        {!estPresent(adr.quartier) && !estPresent(org.horaires) && !estPresent(contacts.telephones) && (
+          <p class="mt-2 text-sm text-encre/80">{t(lang, 'home.contact_here_1')}<a class="hover:underline" href={localizeUrl('/contact/', lang)}>{t(lang, 'home.contact_here_2')}</a>.</p>
+        )}
+      </aside>
+    </div>
+  </section>
+
+  {
+    chiffres.length > 0 && (
+      <section class="border-b border-filet bg-white">
+        <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-8 text-center sm:grid-cols-3">
+          {chiffres.map((c) => (
+            <div>
+              <p class="font-serif text-3xl font-bold text-vert">{c.valeur}</p>
+              <p class="mt-1 text-sm uppercase tracking-wide text-gris">{c.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    filieres.length > 0 && (
+      <section class="section-titre bg-fond">
+        <div class="mx-auto max-w-6xl px-4 py-10">
+          <div class="flex items-baseline justify-between gap-4">
+            <h2>{t(lang, 'home.choose_title')}</h2>
+            <a class="text-sm font-semibold no-underline hover:underline" href={localizeUrl('/formations/', lang)}>{t(lang, 'home.all_trades')}</a>
+          </div>
+          <ul class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filieres.map((f) => (
+              <li class="group overflow-hidden rounded-2xl border border-filet bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+                <a href={localizeUrl(`/formations/${f.data.slug ?? f.id}/`, lang)} class="block no-underline">
+                  <div class="aspect-[16/10] w-full overflow-hidden border-b border-filet bg-vert-clair">
+                    {estPresent(f.data.photo) ? (
+                      <img src={String(f.data.photo)} alt={estPresent(f.data.photo_legende) ? String(f.data.photo_legende) : f.data.titre} class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]" loading="lazy" width="640" height="400" />
+                    ) : estPresent(f.data.icone) ? (
+                      <IllustrationFiliere nom={String(f.data.icone)} classe="h-full w-full transition duration-300 group-hover:scale-[1.04]" />
+                    ) : (
+                      <div class="grid h-full place-items-center text-vert"><IconFiliere nom="" classe="h-10 w-10" /></div>
+                    )}
+                  </div>
+                  <div class="p-4">
+                    <h3 class="font-serif text-lg font-semibold text-vert-nuit group-hover:underline">{f.data.titre}</h3>
+                    {estPresent(f.data.resume) && <p class="mt-1 text-sm leading-relaxed text-encre/75">{resumeCourt(f.data.resume)}</p>}
+                    <span class="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brique">
+                      {t(lang, 'home.discover_trade')}
+                      <svg viewBox="0 0 20 20" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h11M11 5l5 5-5 5" /></svg>
+                    </span>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section-titre border-t border-filet bg-fond">
+    <div class="mx-auto max-w-6xl px-4 py-10">
+      <h2>{t(lang, 'home.steps_title')}</h2>
+      <ol class="mt-5 grid gap-6 sm:grid-cols-3">
+        <li>
+          <span class="grid h-8 w-8 place-items-center rounded-full bg-vert font-serif text-sm font-bold text-white" aria-hidden="true">1</span>
+          <h3 class="mt-2 font-serif text-base font-semibold text-vert-nuit">{t(lang, 'home.step1_h')}</h3>
+          <p class="mt-1 text-sm text-encre/80"><a class="font-semibold no-underline hover:underline" href={localizeUrl('/formations/', lang)}>{t(lang, 'home.step1_1')}</a>{t(lang, 'home.step1_2')}</p>
+        </li>
+        <li>
+          <span class="grid h-8 w-8 place-items-center rounded-full bg-vert font-serif text-sm font-bold text-white" aria-hidden="true">2</span>
+          <h3 class="mt-2 font-serif text-base font-semibold text-vert-nuit">{t(lang, 'home.step2_h')}</h3>
+          <p class="mt-1 text-sm text-encre/80"><a class="font-semibold no-underline hover:underline" href={localizeUrl('/admission/', lang)}>{t(lang, 'home.step2_1')}</a>{t(lang, 'home.step2_2')}</p>
+        </li>
+        <li>
+          <span class="grid h-8 w-8 place-items-center rounded-full bg-vert font-serif text-sm font-bold text-white" aria-hidden="true">3</span>
+          <h3 class="mt-2 font-serif text-base font-semibold text-vert-nuit">{t(lang, 'home.step3_h')}</h3>
+          <p class="mt-1 text-sm text-encre/80">{t(lang, 'home.step3_1')}<a class="font-semibold no-underline hover:underline" href={localizeUrl('/contact/', lang)}>{t(lang, 'home.step3_link')}</a>{t(lang, 'home.step3_2')}</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  {
+    actualites.length > 0 && (
+      <section class="section-titre border-t border-filet bg-white">
+        <div class="mx-auto max-w-6xl px-4 py-10">
+          <div class="flex items-baseline justify-between gap-4">
+            <h2>{t(lang, 'home.news_title')}</h2>
+            <a class="text-sm font-semibold no-underline hover:underline" href={localizeUrl('/actualites/', lang)}>{t(lang, 'home.all_news')}</a>
+          </div>
+          <ul class="mt-4 divide-y divide-filet">
+            {actualites.map((a) => (
+              <li class="py-4">
+                <a href={localizeUrl(`/actualites/${a.id}/`, lang)} class="group block no-underline">
+                  <time class="text-sm text-gris">{formatDate(a.data.date, lang)}</time>
+                  <h3 class="mt-0.5 text-lg font-serif text-vert-nuit group-hover:underline">{a.data.titre}</h3>
+                  {estPresent(a.data.resume) && <p class="mt-1 text-encre/80">{a.data.resume}</p>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>

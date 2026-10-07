@@ -1,0 +1,26 @@
+---
+// Pages statutaires editables (Le Centre, Programmes, Mentions, Confidentialite).
+// Composant partage FR/EN : recoit l'entree, lit la langue sur l'URL.
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../EnTetePage.astro';
+import { getLang, t, type Lang } from '../../lib/i18n';
+
+interface Props {
+  page: CollectionEntry<'pages'>;
+}
+const { page } = Astro.props;
+const lang: Lang = getLang(Astro.url.pathname);
+const { Content } = await render(page);
+const titre = `${page.data.titre}${t(lang, 'brand.suffix')}`;
+const fil = [{ titre: t(lang, 'contact.home'), url: '/' }, { titre: page.data.titre }];
+---
+
+<BaseLayout title={titre} description={page.data.description}>
+  <EnTetePage titre={page.data.titre} chapeau={page.data.description} fil={fil} />
+  <article class="mx-auto max-w-3xl px-4 py-10">
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

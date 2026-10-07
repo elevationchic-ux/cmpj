@@ -1,0 +1,51 @@
+---
+// Galerie : photographies et videos reelles fournies par le Centre, avec legende datee.
+// Composant partage FR/EN : lit la langue sur l'URL.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../EnTetePage.astro';
+import { getGalerie, estPresent } from '../../lib/contenu';
+import { getLang, t, type Lang } from '../../lib/i18n';
+
+const lang: Lang = getLang(Astro.url.pathname);
+const albums = await getGalerie(lang);
+const aDuMedia = albums.some((al) => (al.media ?? []).length > 0);
+
+const titre = `${t(lang, 'gallery.heading')}${t(lang, 'brand.suffix')}`;
+const description = t(lang, 'gallery.desc');
+const fil = [{ titre: t(lang, 'news.home'), url: '/' }, { titre: t(lang, 'gallery.heading') }];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre={t(lang, 'gallery.heading')} chapeau={description} fil={fil} />
+
+  <div class="section-titre mx-auto max-w-6xl px-4 py-10">
+    {
+      aDuMedia ? (
+        albums.map((album) => (album.media ?? []).length > 0 && (
+          <section class="mb-10">
+            {estPresent(album.titre) && <h2>{album.titre}</h2>}
+            {estPresent(album.date) && <p class="text-sm text-gris">{album.date}</p>}
+            <ul class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {album.media!.map((m) => (
+                <li class="overflow-hidden rounded border border-filet bg-white">
+                  <figure>
+                    {m.type === 'video' ? (
+                      <video src={m.url} controls preload="none" class="aspect-video w-full"></video>
+                    ) : (
+                      <img src={m.url} alt={m.legende || ''} loading="lazy" class="aspect-[4/3] w-full object-cover" />
+                    )}
+                    {estPresent(m.legende) && (
+                      <figcaption class="px-3 py-2 text-sm text-encre/80">{m.legende}{estPresent(m.credits) ? `, ${m.credits}` : ''}</figcaption>
+                    )}
+                  </figure>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      ) : (
+        <p>{t(lang, 'gallery.empty')}</p>
+      )
+    }
+  </div>
+</BaseLayout>

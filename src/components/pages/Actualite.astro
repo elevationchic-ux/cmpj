@@ -1,0 +1,57 @@
+---
+// Article d'actualite. Composant partage FR/EN : recoit l'entree, lit la langue sur l'URL.
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getActualitesPubliees, estPresent, slugActualite } from '../../lib/contenu';
+import { getLang, localizeUrl, formatDate, t, type Lang } from '../../lib/i18n';
+
+interface Props {
+  a: CollectionEntry<'actualites'>;
+}
+const { a } = Astro.props;
+const lang: Lang = getLang(Astro.url.pathname);
+const { Content } = await render(a);
+const liste = await getActualitesPubliees(lang);
+const index = liste.findIndex((x) => x.id === a.id);
+const precedent = index > 0 ? liste[index - 1] : null;
+const suivant = index >= 0 && index < liste.length - 1 ? liste[index + 1] : null;
+
+const titre = `${a.data.titre}${t(lang, 'news.title_suffix')}`;
+const description = estPresent(a.data.resume) ? a.data.resume : a.data.titre;
+---
+
+<BaseLayout title={titre} description={description} ogType="article">
+  <article class="mx-auto max-w-3xl px-4 py-10">
+    <nav aria-label={t(lang, 'a11y.breadcrumb')} class="mb-4 text-sm text-gris">
+      <a class="no-underline hover:underline" href={localizeUrl('/', lang)}>{t(lang, 'news.home')}</a> / <a class="no-underline hover:underline" href={localizeUrl('/actualites/', lang)}>{t(lang, 'news.crumb')}</a>
+    </nav>
+
+    <header>
+      <div class="flex items-center gap-3 text-sm">
+        <time class="text-gris">{formatDate(a.data.date, lang)}</time>
+        {estPresent(a.data.categorie) && <span class="font-semibold uppercase tracking-wide text-vert">{a.data.categorie}</span>}
+      </div>
+      <h1 class="mt-2 text-vert-nuit">{a.data.titre}</h1>
+    </header>
+
+    {
+      estPresent(a.data.image) && (
+        <figure class="my-6">
+          <img src={a.data.image} alt={a.data.image_legende || a.data.titre} loading="lazy" class="w-full rounded" />
+          {estPresent(a.data.image_legende) && <figcaption class="mt-1 text-sm text-gris">{a.data.image_legende}</figcaption>}
+        </figure>
+      )
+    }
+
+    {estPresent(a.data.resume) && <p class="mt-4 text-lg leading-relaxed text-encre/85">{a.data.resume}</p>}
+
+    <div class="prose mt-6 max-w-none">
+      <Content />
+    </div>
+
+    <nav class="mt-10 flex justify-between gap-4 border-t border-filet pt-6 text-sm" aria-label={t(lang, 'a11y.news_nav')}>
+      {suivant && <a class="no-underline hover:underline" href={localizeUrl(`/actualites/${slugActualite(suivant.id)}/`, lang)}>← {suivant.data.titre}</a>}
+      {precedent && <a class="ml-auto no-underline hover:underline" href={localizeUrl(`/actualites/${slugActualite(precedent.id)}/`, lang)}>{precedent.data.titre} →</a>}
+    </nav>
+  </article>
+</BaseLayout>

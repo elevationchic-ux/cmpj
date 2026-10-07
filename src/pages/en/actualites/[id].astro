@@ -1,0 +1,15 @@
+---
+// Article d'actualite (anglais). getStaticPaths ne retient que les actualites anglaises ;
+// l'identifiant d'URL est le nom de fichier sans le prefix 'en/'.
+import { getCollection } from 'astro:content';
+import Actualite from '../../../components/pages/Actualite.astro';
+import { slugActualite } from '../../../lib/contenu';
+
+export async function getStaticPaths() {
+  const actualites = await getCollection('actualites', (e) => e.data.publie === true && e.data.lang === 'en');
+  return actualites.map((a) => ({ params: { id: slugActualite(a.id) }, props: { a } }));
+}
+
+const { a } = Astro.props;
+---
+<Actualite a={a} />

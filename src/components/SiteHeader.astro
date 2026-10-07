@@ -1,10 +1,16 @@
 ---
-// En-tete : bandeau Republique/Ministere, identite du Centre, navigation principale.
+// En-tete : bandeau Republique/Ministere, identite du Centre, navigation principale, bascule de langue.
 import { getNavigation, estPresent } from '../lib/contenu';
+import { getLang, localizeUrl, t, type Lang } from '../lib/i18n';
+import BasculeLangue from './BasculeLangue.astro';
 
 const { org } = Astro.props;
-const nav = await getNavigation();
-const liens = (nav.liens ?? []).slice().sort((a, b) => (a.ordre ?? 99) - (b.ordre ?? 99));
+const lang: Lang = getLang(Astro.url.pathname);
+const nav = await getNavigation(lang);
+const liens = (nav.liens ?? [])
+  .slice()
+  .sort((a, b) => (a.ordre ?? 99) - (b.ordre ?? 99))
+  .map((l) => ({ ...l, url: localizeUrl(l.url, lang) }));
 const decouvrir = liens.filter((l) => (l.groupe ?? 'decouvrir') === 'decouvrir');
 const agir = liens.filter((l) => l.groupe === 'agir');
 
@@ -37,7 +43,7 @@ const isActive = (url: string) =>
 
   <div class="mx-auto max-w-6xl px-4">
     <div class="flex flex-wrap items-center justify-between gap-y-3 py-4">
-      <a href="/" class="flex items-center gap-3 no-underline text-inherit" aria-label="Retour à l'accueil">
+      <a href={localizeUrl('/', lang)} class="flex items-center gap-3 no-underline text-inherit" aria-label={t(lang, 'a11y.back_home')}>
         <span
           class="grid h-11 w-11 place-items-center rounded bg-vert font-serif text-lg font-bold leading-none text-white"
           aria-hidden="true">CM</span
@@ -55,7 +61,8 @@ const isActive = (url: string) =>
       </a>
 
       <div class="flex items-center gap-2">
-        <a href="/admission/" class="rounded bg-brique px-4 py-2 text-sm font-semibold text-white no-underline hover:bg-vert-nuit">Candidater</a>
+        <BasculeLangue />
+        <a href={localizeUrl('/admission/', lang)} class="rounded bg-brique px-4 py-2 text-sm font-semibold text-white no-underline hover:bg-vert-nuit">{t(lang, 'header.apply')}</a>
         <button
           id="menu-btn"
           type="button"
@@ -65,14 +72,14 @@ const isActive = (url: string) =>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
-          Menu
+          {t(lang, 'header.menu')}
         </button>
       </div>
 
-      <nav id="menu-principal" class="hidden w-full lg:block lg:w-auto" aria-label="Navigation principale">
+      <nav id="menu-principal" class="hidden w-full lg:block lg:w-auto" aria-label={t(lang, 'a11y.main_nav')}>
         {/* Mobile : deux groupes, decouvrir puis agir. */}
         <div class="flex flex-col gap-1 border-t border-filet py-2 lg:hidden">
-          <p class="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-gris">Découvrir</p>
+          <p class="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-gris">{t(lang, 'header.discover')}</p>
           <ul class="flex flex-col gap-1">
             {
               decouvrir.map((lien) => (
@@ -94,7 +101,7 @@ const isActive = (url: string) =>
           </ul>
           {agir.length > 0 && (
             <>
-              <p class="px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-wider text-gris">Agir</p>
+              <p class="px-3 pb-1 pt-3 text-xs font-bold uppercase tracking-wider text-gris">{t(lang, 'header.act')}</p>
               <ul class="flex flex-col gap-1">
                 {agir.map((lien) => (
                   <li>

@@ -1,0 +1,44 @@
+---
+// Bascule de langue : deux liens vers la page miroir (fonctionne sans JavaScript).
+// Le clic enregistre aussi la preférence dans un cookie pour les prochaines visites.
+import { getLang, localizeUrl, t, LOCALES } from '../lib/i18n';
+
+const path = Astro.url.pathname;
+const lang = getLang(path);
+const libelle: Record<string, string> = { fr: 'FR', en: 'EN' };
+---
+
+<span
+  class="inline-flex overflow-hidden rounded border border-filet text-sm font-semibold"
+  role="group"
+  aria-label={t(lang, 'a11y.toggle')}>
+  {
+    LOCALES.map((code, i) => {
+      const href = localizeUrl(path, code);
+      const actif = code === lang;
+      return (
+        <a
+          href={href}
+          data-lang={code}
+          aria-current={actif ? 'true' : undefined}
+          class:list={[
+            'px-2.5 py-1 no-underline transition-colors',
+            i > 0 && 'border-l border-filet',
+            actif ? 'bg-vert text-white' : 'bg-white text-vert hover:bg-vert-clair',
+          ]}>
+          {libelle[code]}
+        </a>
+      );
+    })
+  }
+</span>
+
+<script>
+  // Mémorise la langue choisie. Le cookie n'écrase jamais un choix explicite de l'utilisateur.
+  document.querySelectorAll<HTMLAnchorElement>('[data-lang]').forEach((a) =>
+    a.addEventListener('click', () => {
+      const v = a.getAttribute('data-lang');
+      document.cookie = `lang=${v}; path=/; max-age=31536000; SameSite=Lax`;
+    })
+  );
+</script>

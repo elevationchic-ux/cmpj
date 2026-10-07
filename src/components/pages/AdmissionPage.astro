@@ -1,0 +1,45 @@
+---
+// Admission et inscription : demarche (contenu editable) + formulaire de pre-inscription.
+// Composant partage FR/EN : lit la langue sur l'URL.
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EnTetePage from '../EnTetePage.astro';
+import FormInscription from '../FormInscription.astro';
+import FormEnhancement from '../FormEnhancement.astro';
+import { getFilieresPubliees, getOrganisation, lienWhatsApp, getPageBySlug } from '../../lib/contenu';
+import { getLang, t, type Lang } from '../../lib/i18n';
+
+const lang: Lang = getLang(Astro.url.pathname);
+const page = await getPageBySlug('admission', lang);
+const { Content } = page ? await render(page) : { Content: null };
+const filieres = await getFilieresPubliees(lang);
+const org = await getOrganisation(lang);
+const whatsapp = lienWhatsApp(org.contacts?.whatsapp, t(lang, 'admission.whatsapp_msg'));
+
+const description = page?.data.description ?? '';
+const titre = `${t(lang, 'admission.heading')}${t(lang, 'brand.suffix')}`;
+const fil = [{ titre: t(lang, 'admission.home'), url: '/' }, { titre: t(lang, 'admission.heading') }];
+---
+
+<BaseLayout title={titre} description={description}>
+  <EnTetePage titre={t(lang, 'admission.heading')} chapeau={description} fil={fil} />
+
+  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-[1.1fr_1fr]">
+    <article class="prose max-w-none">
+      {Content ? <Content /> : (<p>{t(lang, 'admission.fallback')}</p>)}
+    </article>
+
+    <section aria-labelledby="pre-inscription" class="section-titre rounded border border-filet bg-white p-6">
+      <h2 id="pre-inscription">{t(lang, 'admission.pre_h')}</h2>
+      <FormInscription filieres={filieres} />
+      {whatsapp && (
+        <p class="mt-4 text-sm">
+          {t(lang, 'admission.q_before')}
+          <a class="font-semibold no-underline hover:underline" href={whatsapp} target="_blank" rel="noopener noreferrer">{t(lang, 'admission.whatsapp_link')}</a>.
+        </p>
+      )}
+    </section>
+  </div>
+
+  <FormEnhancement />
+</BaseLayout>

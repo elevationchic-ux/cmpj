@@ -1,6 +1,7 @@
 [
   {
     "id": "principale",
+    "lang": "fr",
     "liens": [
       { "titre": "Le Centre", "url": "/le-centre/", "ordre": 1, "groupe": "decouvrir" },
       { "titre": "Formations", "url": "/formations/", "ordre": 2, "groupe": "decouvrir" },
@@ -14,6 +15,24 @@
       { "titre": "Mentions légales", "url": "/mentions-legales/" },
       { "titre": "Confidentialité", "url": "/confidentialite/" },
       { "titre": "Plan du site", "url": "/plan-du-site/" }
+    ]
+  },
+  {
+    "id": "principale-en",
+    "lang": "en",
+    "liens": [
+      { "titre": "The Centre", "url": "/le-centre/", "ordre": 1, "groupe": "decouvrir" },
+      { "titre": "Training", "url": "/formations/", "ordre": 2, "groupe": "decouvrir" },
+      { "titre": "Programmes", "url": "/programmes/", "ordre": 3, "groupe": "decouvrir" },
+      { "titre": "News", "url": "/actualites/", "ordre": 4, "groupe": "decouvrir" },
+      { "titre": "Gallery", "url": "/galerie/", "ordre": 5, "groupe": "decouvrir" },
+      { "titre": "Admission", "url": "/admission/", "ordre": 6, "groupe": "agir" },
+      { "titre": "Contact", "url": "/contact/", "ordre": 7, "groupe": "agir" }
+    ],
+    "liens_pied": [
+      { "titre": "Legal notice", "url": "/mentions-legales/" },
+      { "titre": "Privacy", "url": "/confidentialite/" },
+      { "titre": "Site map", "url": "/plan-du-site/" }
     ]
   }
 ]

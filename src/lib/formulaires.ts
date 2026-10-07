@@ -1,9 +1,17 @@
 // Aide commune aux endpoints de formulaires : page d'accuse simple, sans dependance externe.
+import { t, type Lang } from './i18n';
 
-export function pageAccuse(titre: string, corps: string, ok = true): string {
+// Langue demandee par le formulaire (champ cache lang), par defaut francais.
+export function lireLangue(form: FormData | URLSearchParams): Lang {
+  const v = form.get('lang');
+  return v === 'en' ? 'en' : 'fr';
+}
+
+export function pageAccuse(titre: string, corps: string, ok = true, lang: Lang = 'fr'): string {
   const couleur = ok ? '#0F5B3A' : '#B3202A';
+  const accueil = lang === 'en' ? '/en/' : '/';
   return `<!doctype html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -22,7 +30,7 @@ export function pageAccuse(titre: string, corps: string, ok = true): string {
 <header>${escapeHtml(titre)}</header>
 <main>
   <div class="carte">${corps}</div>
-  <p><a href="/">&larr; Retour à l'accueil</a></p>
+  <p><a href="${accueil}">&larr; ${escapeHtml(t(lang, 'a11y.back_home'))}</a></p>
 </main>
 </body>
 </html>`;
